@@ -1,6 +1,5 @@
-import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
+import { launchBrowser } from "@/lib/browser";
 import { SiteMetrics, ComparisonVerdict } from "@/types";
 
 /**
@@ -8,17 +7,10 @@ import { SiteMetrics, ComparisonVerdict } from "@/types";
  * Reuses the existing seoAnalyzer for scoring.
  */
 export async function scrapeSiteMetrics(url: string): Promise<SiteMetrics> {
-  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+  let browser: Awaited<ReturnType<typeof launchBrowser>> | null = null;
 
   try {
-    chromium.setGraphicsMode = false;
-
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: { width: 1280, height: 800 },
-      executablePath: await chromium.executablePath(),
-      headless: "shell",
-    });
+    browser = await launchBrowser();
 
     const page = await browser.newPage();
     await page.setUserAgent(

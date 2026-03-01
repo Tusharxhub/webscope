@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
 import { prisma } from "@/lib/prisma";
 import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
+import { launchBrowser } from "@/lib/browser";
 import { ScrapeResponse } from "@/types";
 
 // Simple in-memory rate limiter per user
@@ -18,7 +17,7 @@ const MAX_BODY_TEXT = 5000;
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest): Promise<NextResponse<ScrapeResponse>> {
-  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+  let browser: Awaited<ReturnType<typeof launchBrowser>> | null = null;
 
   try {
     const session = await getServerSession(authOptions);
@@ -53,14 +52,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     const startTime = Date.now();
 
     // ---- Puppeteer scrape (serverless-compatible) ----
-    chromium.setGraphicsMode = false;
-
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: { width: 1280, height: 800 },
-      executablePath: await chromium.executablePath(),
-      headless: "shell",
-    });
+    browser = await launchBrowser();
 
     const page = await browser.newPage();
     await page.setUserAgent(
