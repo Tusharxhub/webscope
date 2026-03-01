@@ -50,6 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     // ---- Puppeteer scrape ----
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: puppeteer.executablePath(),
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
