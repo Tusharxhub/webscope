@@ -1,10 +1,10 @@
 {
   "functions": {
-    "src/app/api/scrape/route.ts": {
+    "api/scrape": {
       "memory": 1024,
       "maxDuration": 60
     },
-    "src/app/api/compare/route.ts": {
+    "api/compare": {
       "memory": 1024,
       "maxDuration": 60
     }

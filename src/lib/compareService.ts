@@ -1,22 +1,19 @@
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
 import { launchBrowser } from "@/lib/browser";
 import { SiteMetrics, ComparisonVerdict } from "@/types";
+import type { Browser } from "puppeteer-core";
 
 /**
  * Scrape a single URL and return a SiteMetrics object.
- * Reuses the existing seoAnalyzer for scoring.
+ * Accepts an existing browser instance to avoid launching multiple browsers.
  */
-export async function scrapeSiteMetrics(url: string): Promise<SiteMetrics> {
-  let browser: Awaited<ReturnType<typeof launchBrowser>> | null = null;
+async function scrapePage(url: string, browser: Browser): Promise<SiteMetrics> {
+  const page = await browser.newPage();
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  );
 
   try {
-    browser = await launchBrowser();
-
-    const page = await browser.newPage();
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    );
-
     const startTime = Date.now();
 
     // Track timing phases
@@ -67,9 +64,6 @@ export async function scrapeSiteMetrics(url: string): Promise<SiteMetrics> {
       };
     });
 
-    await browser.close();
-    browser = null;
-
     // SEO analysis
     const pageExtraction: PageExtraction = {
       title: extracted.title,
@@ -95,6 +89,26 @@ export async function scrapeSiteMetrics(url: string): Promise<SiteMetrics> {
       scriptCount: extracted.scriptCount,
       imageCount: extracted.imageCount,
     };
+  } finally {
+    await page.close();
+  }
+}
+
+/**
+ * Scrape two URLs using a single browser instance and return both metrics.
+ * Uses one Chromium process to stay within serverless memory limits.
+ */
+export async function scrapeBothSites(
+  urlA: string,
+  urlB: string
+): Promise<{ siteA: SiteMetrics; siteB: SiteMetrics }> {
+  let browser: Awaited<ReturnType<typeof launchBrowser>> | null = null;
+
+  try {
+    browser = await launchBrowser();
+    const siteA = await scrapePage(urlA, browser);
+    const siteB = await scrapePage(urlB, browser);
+    return { siteA, siteB };
   } finally {
     if (browser) {
       try {

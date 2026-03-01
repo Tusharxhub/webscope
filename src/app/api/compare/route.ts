@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { compareSchema } from "@/lib/validators";
-import { scrapeSiteMetrics, deriveVerdicts } from "@/lib/compareService";
+import { scrapeBothSites, deriveVerdicts } from "@/lib/compareService";
 import { CompareResponse } from "@/types";
 
 // Simple in-memory rate limiter per user
@@ -41,11 +41,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<CompareRespon
 
     const { urlA, urlB } = parsed.data;
 
-    // Scrape both sites in parallel
-    const [siteA, siteB] = await Promise.all([
-      scrapeSiteMetrics(urlA),
-      scrapeSiteMetrics(urlB),
-    ]);
+    // Scrape both sites using a single browser instance (saves memory)
+    const { siteA, siteB } = await scrapeBothSites(urlA, urlB);
 
     const comparison = deriveVerdicts(siteA, siteB);
 
