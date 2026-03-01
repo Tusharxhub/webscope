@@ -78,7 +78,7 @@ export default function DetailModal({ log, onClose }: DetailModalProps) {
             {scraped.headings && scraped.headings.length > 0 && (
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                  H2 Headings ({scraped.headings.length})
+                  Headings ({scraped.headings.length})
                 </label>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                   {scraped.headings.map((h: string, i: number) => (
@@ -92,6 +92,20 @@ export default function DetailModal({ log, onClose }: DetailModalProps) {
                       <span className="truncate">{h}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Body Text Preview */}
+            {scraped.bodyText && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                  Body Text Preview
+                </label>
+                <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/5 rounded-xl p-3 border border-gray-100 dark:border-white/5 max-h-60 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                  {scraped.bodyText.length > 2000
+                    ? scraped.bodyText.substring(0, 2000) + "…"
+                    : scraped.bodyText}
                 </div>
               </div>
             )}

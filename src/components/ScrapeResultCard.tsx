@@ -55,8 +55,22 @@ export default function ScrapeResultCard({ result }: ScrapeResultCardProps) {
 
         {headings.length === 0 && (
           <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-            No H2 headings found on this page.
+            No headings found on this page.
           </p>
+        )}
+
+        {/* Body Text Preview */}
+        {scrapedData.bodyText && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Body Text Preview
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-xl p-3 border border-gray-100 dark:border-white/5 max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+              {scrapedData.bodyText.length > 1000
+                ? scrapedData.bodyText.substring(0, 1000) + "\u2026"
+                : scrapedData.bodyText}
+            </p>
+          </div>
         )}
       </div>
     </div>

@@ -185,7 +185,12 @@ export default function DashboardPage() {
               </p>
               {lastResult.data.scrapedData.headings.length > 0 && (
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                  Found {lastResult.data.scrapedData.headings.length} H2 heading(s)
+                  Found {lastResult.data.scrapedData.headings.length} heading(s)
+                </p>
+              )}
+              {lastResult.data.scrapedData.bodyText && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 line-clamp-2">
+                  {lastResult.data.scrapedData.bodyText.substring(0, 200)}…
                 </p>
               )}
             </div>

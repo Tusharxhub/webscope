@@ -34,5 +34,6 @@ model ScrapedData {
   title     String
   headings  String[]
   meta      String?
+  bodyText  String?
   createdAt DateTime   @default(now())
 }

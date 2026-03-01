@@ -6,6 +6,7 @@ export interface ScrapeResult {
   title: string;
   headings: string[];
   meta: string | null;
+  bodyText: string | null;
 }
 
 export interface RequestLogEntry {
@@ -25,6 +26,7 @@ export interface ScrapedDataEntry {
   title: string;
   headings: string[];
   meta: string | null;
+  bodyText: string | null;
   createdAt: string;
 }
 
