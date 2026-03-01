@@ -16,6 +16,28 @@ const MAX_BODY_TEXT = 5000;
 
 // Allow up to 60 s on Vercel Pro / 10 s on Hobby
 export const maxDuration = 60;
+export const runtime = "nodejs";
+
+type ErrorWithCode = {
+  code?: string;
+  message?: string;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Internal server error";
+}
+
+function getErrorCode(error: unknown): string | null {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as ErrorWithCode).code === "string"
+  ) {
+    return (error as ErrorWithCode).code as string;
+  }
+  return null;
+}
 
 export async function POST(
   req: NextRequest
@@ -80,7 +102,22 @@ export async function POST(
     }
 
     // ── Scrape with Axios + Cheerio (lightweight, serverless-safe) ──
-    const scraped = await scrapeSite(url);
+    let scraped;
+    try {
+      scraped = await scrapeSite(url);
+    } catch (error) {
+      console.error("SCRAPE NETWORK ERROR:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          errorType: "NETWORK" as const,
+          statusCode: 0,
+          error:
+            "Failed to fetch the target URL. The site may be unavailable, blocking requests, or taking too long to respond.",
+        },
+        { status: 502 }
+      );
+    }
 
     // ── SEO Analysis ──
     const pageExtraction: PageExtraction = {
@@ -100,32 +137,72 @@ export async function POST(
       : null;
 
     // ── Persist to DB ──
-    const requestLog = await prisma.requestLog.create({
-      data: {
-        url,
-        method: "GET",
-        statusCode: scraped.statusCode || 200,
-        responseTime: scraped.responseTime,
-        userId,
-      },
-    });
+    let requestLog;
+    let scrapedData;
+    try {
+      requestLog = await prisma.requestLog.create({
+        data: {
+          url,
+          method: "GET",
+          statusCode: scraped.statusCode || 200,
+          responseTime: scraped.responseTime,
+          userId,
+        },
+      });
 
-    const scrapedData = await prisma.scrapedData.create({
-      data: {
-        requestId: requestLog.id,
-        title: scraped.title || "No title found",
-        headings: scraped.headings,
-        meta: scraped.meta,
-        bodyText,
-        seoScore: seoAnalysis.seoScore,
-        wordCount: seoAnalysis.metrics.wordCount,
-        h1Count: seoAnalysis.metrics.h1Count,
-        h2Count: seoAnalysis.metrics.h2Count,
-        metaLength: seoAnalysis.metrics.metaLength,
-        titleLength: seoAnalysis.metrics.titleLength,
-        missingAltCount: seoAnalysis.metrics.missingAltCount,
-      },
-    });
+      scrapedData = await prisma.scrapedData.create({
+        data: {
+          requestId: requestLog.id,
+          title: scraped.title || "No title found",
+          headings: scraped.headings,
+          meta: scraped.meta,
+          bodyText,
+          seoScore: seoAnalysis.seoScore,
+          wordCount: seoAnalysis.metrics.wordCount,
+          h1Count: seoAnalysis.metrics.h1Count,
+          h2Count: seoAnalysis.metrics.h2Count,
+          metaLength: seoAnalysis.metrics.metaLength,
+          titleLength: seoAnalysis.metrics.titleLength,
+          missingAltCount: seoAnalysis.metrics.missingAltCount,
+        },
+      });
+    } catch (error) {
+      console.error("SCRAPE DATABASE ERROR:", error);
+      const code = getErrorCode(error);
+
+      if (["P1000", "P1001", "P1002", "P1017"].includes(code || "")) {
+        return NextResponse.json(
+          {
+            success: false,
+            errorType: "UNKNOWN" as const,
+            error:
+              "Database connection failed. Check DATABASE_URL and database availability.",
+          },
+          { status: 503 }
+        );
+      }
+
+      if (["P2021", "P2022"].includes(code || "")) {
+        return NextResponse.json(
+          {
+            success: false,
+            errorType: "UNKNOWN" as const,
+            error:
+              "Database schema is out of sync. Run Prisma migrations (or db push) on the production database.",
+          },
+          { status: 503 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          errorType: "UNKNOWN" as const,
+          error: getErrorMessage(error),
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -143,10 +220,8 @@ export async function POST(
     });
   } catch (error: unknown) {
     console.error("SCRAPE ERROR:", error);
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: getErrorMessage(error) },
       { status: 500 }
     );
   }
