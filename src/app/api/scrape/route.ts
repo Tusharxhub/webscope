@@ -5,6 +5,7 @@ import chromium from "@sparticuz/chromium";
 import { prisma } from "@/lib/prisma";
 import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
+import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
 import { ScrapeResponse } from "@/types";
 
 // Simple in-memory rate limiter per user
@@ -100,6 +101,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
               headings: [],
               meta: null,
               bodyText: null,
+              seoScore: null,
+              wordCount: null,
+              h1Count: null,
+              h2Count: null,
+              metaLength: null,
+              titleLength: null,
+              missingAltCount: null,
               createdAt: new Date().toISOString(),
             },
           },
@@ -110,7 +118,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
 
     // Extract data from the fully-rendered page
     const extractedData = await page.evaluate(() => {
-      const title = document.title?.trim() || "No title found";
+      const title = document.title?.trim() || "";
 
       const h1Elements = Array.from(document.querySelectorAll("h1"));
       const h2Elements = Array.from(document.querySelectorAll("h2"));
@@ -125,7 +133,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
       // Gather visible text content from the body
       const bodyText = document.body?.innerText?.trim() || null;
 
-      return { title, headings, meta, bodyText };
+      // Image alt analysis
+      const images = Array.from(document.querySelectorAll("img"));
+      const totalImages = images.length;
+      const imagesWithoutAlt = images.filter((img) => {
+        const alt = img.getAttribute("alt");
+        return alt === null || alt.trim() === "";
+      }).length;
+
+      return {
+        title,
+        headings,
+        meta,
+        bodyText,
+        h1Count: h1Elements.length,
+        h2Count: h2Elements.length,
+        totalImages,
+        imagesWithoutAlt,
+      };
     });
 
     const responseTime = Date.now() - startTime;
@@ -137,6 +162,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     const bodyText = extractedData.bodyText
       ? extractedData.bodyText.substring(0, MAX_BODY_TEXT)
       : null;
+
+    // ── SEO Analysis ──
+    const pageExtraction: PageExtraction = {
+      title: extractedData.title,
+      meta: extractedData.meta,
+      h1Count: extractedData.h1Count,
+      h2Count: extractedData.h2Count,
+      bodyText: extractedData.bodyText,
+      totalImages: extractedData.totalImages,
+      imagesWithoutAlt: extractedData.imagesWithoutAlt,
+    };
+    const seoAnalysis = analyzeSeo(pageExtraction);
 
     const requestLog = await prisma.requestLog.create({
       data: {
@@ -151,10 +188,17 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     const scrapedData = await prisma.scrapedData.create({
       data: {
         requestId: requestLog.id,
-        title: extractedData.title,
+        title: extractedData.title || "No title found",
         headings: extractedData.headings,
         meta: extractedData.meta,
         bodyText,
+        seoScore: seoAnalysis.seoScore,
+        wordCount: seoAnalysis.metrics.wordCount,
+        h1Count: seoAnalysis.metrics.h1Count,
+        h2Count: seoAnalysis.metrics.h2Count,
+        metaLength: seoAnalysis.metrics.metaLength,
+        titleLength: seoAnalysis.metrics.titleLength,
+        missingAltCount: seoAnalysis.metrics.missingAltCount,
       },
     });
 
@@ -163,6 +207,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
       data: {
         requestLog: { ...requestLog, createdAt: requestLog.createdAt.toISOString() },
         scrapedData: { ...scrapedData, createdAt: scrapedData.createdAt.toISOString() },
+        seoAnalysis,
       },
     });
   } catch (error: unknown) {

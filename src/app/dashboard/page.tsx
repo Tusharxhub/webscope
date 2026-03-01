@@ -11,6 +11,9 @@ import DetailModal from "@/components/DetailModal";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import SeoScoreBadge from "@/components/SeoScoreBadge";
+import SeoChecklist from "@/components/SeoChecklist";
+import SeoMetricsGrid from "@/components/SeoMetricsGrid";
 import { ScrapeResponse, RequestLogEntry, StatsData } from "@/types";
 
 export default function DashboardPage() {
@@ -186,6 +189,46 @@ export default function DashboardPage() {
             </div>
           )}
         </Card>
+
+        {/* SEO Analysis */}
+        {lastResult?.data?.seoAnalysis && (
+          <Card className="p-4 sm:p-5 mb-6 animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                SEO Analysis
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Score badge */}
+              <div className="flex flex-col items-center justify-center lg:border-r border-zinc-200 dark:border-zinc-700/60 lg:pr-6">
+                <SeoScoreBadge score={lastResult.data.seoAnalysis.seoScore} />
+                <span className="mt-2 text-xs font-mono text-zinc-400 dark:text-zinc-600">
+                  Overall SEO Score
+                </span>
+              </div>
+
+              {/* Checklist */}
+              <div>
+                <h3 className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono mb-3">
+                  Checks
+                </h3>
+                <SeoChecklist checks={lastResult.data.seoAnalysis.checks} />
+              </div>
+
+              {/* Metrics grid */}
+              <div>
+                <h3 className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono mb-3">
+                  Metrics
+                </h3>
+                <SeoMetricsGrid metrics={lastResult.data.seoAnalysis.metrics} />
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="mb-6">

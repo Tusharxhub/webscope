@@ -3,6 +3,7 @@
 import { RequestLogEntry } from "@/types";
 import StatusBadge from "./StatusBadge";
 import ResponseTimeBadge from "./ResponseTimeBadge";
+import SeoScoreBadge from "./SeoScoreBadge";
 
 interface DetailModalProps {
   log: RequestLogEntry | null;
@@ -111,6 +112,50 @@ export default function DetailModal({ log, onClose }: DetailModalProps) {
                   {scraped.bodyText.length > 2000
                     ? scraped.bodyText.substring(0, 2000) + "…"
                     : scraped.bodyText}
+                </div>
+              </div>
+            )}
+
+            {/* SEO Score */}
+            {scraped.seoScore != null && (
+              <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                <label className="block text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono mb-3">
+                  SEO Score
+                </label>
+                <div className="flex items-center gap-4">
+                  <SeoScoreBadge score={scraped.seoScore} size={72} />
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs font-mono">
+                    {scraped.wordCount != null && (
+                      <div className="text-zinc-500 dark:text-zinc-400">
+                        Words: <span className="text-zinc-800 dark:text-zinc-200 font-medium">{scraped.wordCount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {scraped.h1Count != null && (
+                      <div className="text-zinc-500 dark:text-zinc-400">
+                        H1: <span className="text-zinc-800 dark:text-zinc-200 font-medium">{scraped.h1Count}</span>
+                      </div>
+                    )}
+                    {scraped.h2Count != null && (
+                      <div className="text-zinc-500 dark:text-zinc-400">
+                        H2: <span className="text-zinc-800 dark:text-zinc-200 font-medium">{scraped.h2Count}</span>
+                      </div>
+                    )}
+                    {scraped.titleLength != null && (
+                      <div className="text-zinc-500 dark:text-zinc-400">
+                        Title: <span className="text-zinc-800 dark:text-zinc-200 font-medium">{scraped.titleLength} chars</span>
+                      </div>
+                    )}
+                    {scraped.metaLength != null && (
+                      <div className="text-zinc-500 dark:text-zinc-400">
+                        Meta: <span className="text-zinc-800 dark:text-zinc-200 font-medium">{scraped.metaLength} chars</span>
+                      </div>
+                    )}
+                    {scraped.missingAltCount != null && (
+                      <div className={scraped.missingAltCount > 0 ? "text-amber-500" : "text-zinc-500 dark:text-zinc-400"}>
+                        No Alt: <span className={`font-medium ${scraped.missingAltCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-200"}`}>{scraped.missingAltCount}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

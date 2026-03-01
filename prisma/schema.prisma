@@ -28,12 +28,19 @@ model RequestLog {
 }
 
 model ScrapedData {
-  id        String     @id @default(uuid())
-  requestId String
-  request   RequestLog @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  title     String
-  headings  String[]
-  meta      String?
-  bodyText  String?
-  createdAt DateTime   @default(now())
+  id              String     @id @default(uuid())
+  requestId       String
+  request         RequestLog @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  title           String
+  headings        String[]
+  meta            String?
+  bodyText        String?
+  seoScore        Int?
+  wordCount       Int?
+  h1Count         Int?
+  h2Count         Int?
+  metaLength      Int?
+  titleLength     Int?
+  missingAltCount Int?
+  createdAt       DateTime   @default(now())
 }
