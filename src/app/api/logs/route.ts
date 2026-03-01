@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { RequestLog, ScrapedData } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 type LogWithScrapedData = RequestLog & { scrapedData: ScrapedData[] };
 
 export async function GET(req: NextRequest) {
