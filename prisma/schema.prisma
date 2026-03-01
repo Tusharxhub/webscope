@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RequestLog {
+  id           String   @id @default(uuid())
+  url          String
+  method       String
+  statusCode   Int
+  responseTime Int
+  createdAt    DateTime @default(now())
+}
+
+model ScrapedData {
+  id        String   @id @default(uuid())
+  requestId String
+  title     String
+  content   String?
+  createdAt DateTime @default(now())
+}
