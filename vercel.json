@@ -1,12 +1,1 @@
-{
-  "functions": {
-    "api/scrape": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "api/compare": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  }
-}
+{}
