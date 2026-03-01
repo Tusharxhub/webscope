@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { RequestLog, ScrapedData } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
-
-type LogWithScrapedData = RequestLog & { scrapedData: ScrapedData[] };
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,10 +31,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        logs: logs.map((log: LogWithScrapedData) => ({
+        logs: logs.map((log) => ({
           ...log,
           createdAt: log.createdAt.toISOString(),
-          scrapedData: log.scrapedData.map((sd: ScrapedData) => ({
+          scrapedData: log.scrapedData.map((sd) => ({
             ...sd,
             createdAt: sd.createdAt.toISOString(),
           })),
