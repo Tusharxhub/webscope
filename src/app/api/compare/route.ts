@@ -3,14 +3,16 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { compareSchema } from "@/lib/validators";
-import { scrapeBothSites, deriveVerdicts } from "@/lib/compareService";
+import { compareWebsites, deriveVerdicts } from "@/services/compareService";
 import { CompareResponse } from "@/types";
+import { classifyPrismaError, jsonApiError } from "@/lib/errorHandler";
 
 // Simple in-memory rate limiter per user
 const lastCompare = new Map<string, number>();
 
 // Allow up to 60 s on Vercel Pro / 10 s on Hobby
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 export async function POST(
   req: NextRequest
@@ -19,22 +21,38 @@ export async function POST(
     // ── Auth ──
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return jsonApiError("UNAUTHORIZED", "Unauthorized", 401);
     }
 
-    const userId = session.user.id;
+    let userId = session.user.id;
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!userExists) {
+      const sessionEmail = session.user.email;
+      if (!sessionEmail) {
+        return jsonApiError("UNAUTHORIZED", "Session is no longer valid. Please sign in again.", 401);
+      }
+
+      const userByEmail = await prisma.user.findUnique({
+        where: { email: sessionEmail },
+        select: { id: true },
+      });
+
+      if (!userByEmail) {
+        return jsonApiError("UNAUTHORIZED", "Session is no longer valid. Please sign in again.", 401);
+      }
+
+      userId = userByEmail.id;
+    }
 
     // ── Rate limit: 1 comparison per 5 seconds per user ──
     const now = Date.now();
     const last = lastCompare.get(userId) || 0;
     if (now - last < 5000) {
-      return NextResponse.json(
-        { success: false, error: "Please wait a moment before comparing again" },
-        { status: 429 }
-      );
+      return jsonApiError("VALIDATION", "Please wait a moment before comparing again", 429);
     }
     lastCompare.set(userId, now);
 
@@ -43,25 +61,19 @@ export async function POST(
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
+      return jsonApiError("VALIDATION", "Invalid JSON body", 400);
     }
 
     const parsed = compareSchema.safeParse(body);
     if (!parsed.success) {
       const msg = parsed.error.issues[0]?.message || "Invalid URLs";
-      return NextResponse.json(
-        { success: false, error: msg },
-        { status: 400 }
-      );
+      return jsonApiError("VALIDATION", msg, 400);
     }
 
     const { urlA, urlB } = parsed.data;
 
-    // ── Scrape both sites in parallel (Axios + Cheerio, no Puppeteer) ──
-    const { siteA, siteB } = await scrapeBothSites(urlA, urlB);
+    // ── Analyze both sites via centralized analysis service ──
+    const { siteA, siteB } = await compareWebsites(urlA, urlB);
 
     const comparison = deriveVerdicts(siteA, siteB);
 
@@ -69,6 +81,7 @@ export async function POST(
     try {
       await prisma.comparison.create({
         data: { userId, urlA, urlB },
+        select: { id: true },
       });
     } catch (dbError) {
       // Log but don't fail the response — scraping already succeeded
@@ -81,14 +94,15 @@ export async function POST(
     });
   } catch (error: unknown) {
     console.error("COMPARE ERROR:", error);
-
-    // Return a user-friendly message, never leak stack traces
-    const message =
-      error instanceof Error ? error.message : "Comparison failed";
-
+    const prismaError = classifyPrismaError(error);
     return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
+      {
+        success: false,
+        errorType: prismaError.type,
+        message: prismaError.message,
+        error: prismaError.message,
+      },
+      { status: prismaError.status }
     );
   }
 }

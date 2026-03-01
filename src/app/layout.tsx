@@ -14,8 +14,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WebScope — Developer Web Observability",
-  description: "Measure the web. Scrape, inspect, and monitor HTTP requests with a developer-first observability tool.",
+  title: "WebScope Pro – AI Website Intelligence Platform",
+  description: "Measure the web. Scrape, inspect, SEO, performance and AI-based analysis in one system.",
 };
 
 export default function RootLayout({

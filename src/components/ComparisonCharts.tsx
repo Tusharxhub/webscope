@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -22,60 +23,78 @@ interface ComparisonChartsProps {
   siteB: SiteMetrics;
 }
 
-export default function ComparisonCharts({ siteA, siteB }: ComparisonChartsProps) {
+function ComparisonCharts({ siteA, siteB }: ComparisonChartsProps) {
   // ── Bar Chart: Response Time breakdown ──
-  const barData = [
-    {
-      name: "Total Time",
-      "Site A": +(siteA.totalTime / 1000).toFixed(2),
-      "Site B": +(siteB.totalTime / 1000).toFixed(2),
-    },
-    {
-      name: "Server Time",
-      "Site A": +(siteA.serverTime / 1000).toFixed(2),
-      "Site B": +(siteB.serverTime / 1000).toFixed(2),
-    },
-    {
-      name: "Parse Time",
-      "Site A": +(siteA.parseTime / 1000).toFixed(2),
-      "Site B": +(siteB.parseTime / 1000).toFixed(2),
-    },
-  ];
+  const barData = useMemo(
+    () => [
+      {
+        name: "Total Time",
+        "Site A": +(siteA.totalTime / 1000).toFixed(2),
+        "Site B": +(siteB.totalTime / 1000).toFixed(2),
+      },
+      {
+        name: "Server Time",
+        "Site A": +(siteA.serverTime / 1000).toFixed(2),
+        "Site B": +(siteB.serverTime / 1000).toFixed(2),
+      },
+      {
+        name: "Parse Time",
+        "Site A": +(siteA.parseTime / 1000).toFixed(2),
+        "Site B": +(siteB.parseTime / 1000).toFixed(2),
+      },
+    ],
+    [siteA.parseTime, siteA.serverTime, siteA.totalTime, siteB.parseTime, siteB.serverTime, siteB.totalTime]
+  );
 
   // ── Radar Chart: SEO & structural metrics (normalised 0-100) ──
-  const maxWordCount = Math.max(siteA.wordCount, siteB.wordCount, 1);
-  const maxImages = Math.max(siteA.imageCount, siteB.imageCount, 1);
-  const maxH2 = Math.max(siteA.h2Count, siteB.h2Count, 1);
-  const maxScripts = Math.max(siteA.scriptCount, siteB.scriptCount, 1);
+  const radarData = useMemo(() => {
+    const maxWordCount = Math.max(siteA.wordCount, siteB.wordCount, 1);
+    const maxImages = Math.max(siteA.imageCount, siteB.imageCount, 1);
+    const maxH2 = Math.max(siteA.h2Count, siteB.h2Count, 1);
+    const maxScripts = Math.max(siteA.scriptCount, siteB.scriptCount, 1);
 
-  const radarData = [
-    { metric: "SEO Score", A: siteA.seoScore, B: siteB.seoScore },
-    {
-      metric: "Word Count",
-      A: Math.round((siteA.wordCount / maxWordCount) * 100),
-      B: Math.round((siteB.wordCount / maxWordCount) * 100),
-    },
-    {
-      metric: "H1 Valid",
-      A: siteA.h1Count === 1 ? 100 : siteA.h1Count === 0 ? 0 : 40,
-      B: siteB.h1Count === 1 ? 100 : siteB.h1Count === 0 ? 0 : 40,
-    },
-    {
-      metric: "H2 Tags",
-      A: Math.round((siteA.h2Count / maxH2) * 100),
-      B: Math.round((siteB.h2Count / maxH2) * 100),
-    },
-    {
-      metric: "Images",
-      A: Math.round((siteA.imageCount / maxImages) * 100),
-      B: Math.round((siteB.imageCount / maxImages) * 100),
-    },
-    {
-      metric: "Script Lean",
-      A: Math.round(((maxScripts - siteA.scriptCount) / maxScripts) * 100),
-      B: Math.round(((maxScripts - siteB.scriptCount) / maxScripts) * 100),
-    },
-  ];
+    return [
+      { metric: "SEO Score", A: siteA.seoScore, B: siteB.seoScore },
+      {
+        metric: "Word Count",
+        A: Math.round((siteA.wordCount / maxWordCount) * 100),
+        B: Math.round((siteB.wordCount / maxWordCount) * 100),
+      },
+      {
+        metric: "H1 Valid",
+        A: siteA.h1Count === 1 ? 100 : siteA.h1Count === 0 ? 0 : 40,
+        B: siteB.h1Count === 1 ? 100 : siteB.h1Count === 0 ? 0 : 40,
+      },
+      {
+        metric: "H2 Tags",
+        A: Math.round((siteA.h2Count / maxH2) * 100),
+        B: Math.round((siteB.h2Count / maxH2) * 100),
+      },
+      {
+        metric: "Images",
+        A: Math.round((siteA.imageCount / maxImages) * 100),
+        B: Math.round((siteB.imageCount / maxImages) * 100),
+      },
+      {
+        metric: "Script Lean",
+        A: Math.round(((maxScripts - siteA.scriptCount) / maxScripts) * 100),
+        B: Math.round(((maxScripts - siteB.scriptCount) / maxScripts) * 100),
+      },
+    ];
+  }, [
+    siteA.h1Count,
+    siteA.h2Count,
+    siteA.imageCount,
+    siteA.scriptCount,
+    siteA.seoScore,
+    siteA.wordCount,
+    siteB.h1Count,
+    siteB.h2Count,
+    siteB.imageCount,
+    siteB.scriptCount,
+    siteB.seoScore,
+    siteB.wordCount,
+  ]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -164,3 +183,5 @@ export default function ComparisonCharts({ siteA, siteB }: ComparisonChartsProps
     </div>
   );
 }
+
+export default memo(ComparisonCharts);

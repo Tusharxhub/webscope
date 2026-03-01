@@ -5,7 +5,7 @@ const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 /** Maximum time (ms) to wait for a single HTTP request. */
-const REQUEST_TIMEOUT = 8000;
+const REQUEST_TIMEOUT = 5000;
 
 // ── Types ──
 

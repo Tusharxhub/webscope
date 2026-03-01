@@ -26,6 +26,10 @@ model RequestLog {
   user         User          @relation(fields: [userId], references: [id])
   scrapedData  ScrapedData[]
   createdAt    DateTime      @default(now())
+
+  @@index([url])
+  @@index([createdAt])
+  @@index([userId])
 }
 
 model ScrapedData {
@@ -55,4 +59,7 @@ model Comparison {
   urlA      String
   urlB      String
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }

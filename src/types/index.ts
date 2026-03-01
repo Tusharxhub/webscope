@@ -75,7 +75,14 @@ export interface ScrapedDataEntry {
   createdAt: string;
 }
 
-export type ScrapeErrorType = "DISALLOWED_BY_ROBOTS" | "NETWORK" | "VALIDATION" | "UNKNOWN";
+export type ScrapeErrorType =
+  | "DISALLOWED_BY_ROBOTS"
+  | "NETWORK"
+  | "VALIDATION"
+  | "UNAUTHORIZED"
+  | "TIMEOUT"
+  | "DATABASE"
+  | "UNKNOWN";
 
 export interface ScrapeResponse {
   success: boolean;
@@ -85,6 +92,7 @@ export interface ScrapeResponse {
     seoAnalysis?: SeoAnalysis;
   };
   error?: string;
+  message?: string;
   /** Machine-readable error category (present when success is false). */
   errorType?: ScrapeErrorType;
   /** HTTP status code from the target site (0 if request was blocked before fetch). */
@@ -138,6 +146,8 @@ export interface CompareResponse {
   success: boolean;
   data?: ComparisonResult;
   error?: string;
+  message?: string;
+  errorType?: string;
 }
 
 export interface ComparisonHistoryEntry {
@@ -146,3 +156,6 @@ export interface ComparisonHistoryEntry {
   urlB: string;
   createdAt: string;
 }
+
+export * from "./analysis";
+export * from "./api";

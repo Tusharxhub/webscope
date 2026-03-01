@@ -1,3 +1,5 @@
+import StatusChip from "@/components/dashboard/StatusChip";
+
 interface StatusBadgeProps {
   code: number;
 }
@@ -15,9 +17,5 @@ export default function StatusBadge({ code }: StatusBadgeProps) {
     color = "text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40";
   }
 
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono font-medium tracking-wide ${color}`}>
-      [ {code || "N/A"} ]
-    </span>
-  );
+  return <StatusChip value={`[ ${code || "N/A"} ]`} className={color} />;
 }

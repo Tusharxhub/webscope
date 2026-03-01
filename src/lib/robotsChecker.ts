@@ -1,7 +1,7 @@
 import axios from "axios";
 
 /** Timeout (ms) for fetching robots.txt — must be fast. */
-const ROBOTS_TIMEOUT = 3000;
+const ROBOTS_TIMEOUT = 5000;
 
 export interface RobotsCheckResult {
   allowed: boolean;

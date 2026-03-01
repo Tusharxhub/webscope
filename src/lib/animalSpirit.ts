@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const GEMINI_MODEL = "gemini-1.5-flash";
-const AI_TIMEOUT_MS = 4500;
+const AI_TIMEOUT_MS = 6000;
 
 export interface AnimalSpiritInput {
   title: string;

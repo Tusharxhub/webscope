@@ -3,11 +3,9 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
-import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
-import { scrapeSite } from "@/lib/scraper";
-import { checkRobotsTxt } from "@/lib/robotsChecker";
-import { generateAnimalSpirit, getFallbackAnimalSpirit } from "@/lib/animalSpirit";
+import { analyzeWebsite } from "@/lib/analyzeWebsite";
 import { ScrapeResponse } from "@/types";
+import { classifyPrismaError, jsonApiError } from "@/lib/errorHandler";
 
 // Simple in-memory rate limiter per user
 const lastRequest = new Map<string, number>();
@@ -19,27 +17,6 @@ const MAX_BODY_TEXT = 5000;
 export const maxDuration = 60;
 export const runtime = "nodejs";
 
-type ErrorWithCode = {
-  code?: string;
-  message?: string;
-};
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Internal server error";
-}
-
-function getErrorCode(error: unknown): string | null {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof (error as ErrorWithCode).code === "string"
-  ) {
-    return (error as ErrorWithCode).code as string;
-  }
-  return null;
-}
-
 export async function POST(
   req: NextRequest
 ): Promise<NextResponse<ScrapeResponse>> {
@@ -47,10 +24,7 @@ export async function POST(
     // ── Auth ──
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return jsonApiError("UNAUTHORIZED", "Unauthorized", 401);
     }
 
     // Resolve a valid DB user id from session to avoid stale-token FK errors
@@ -68,24 +42,10 @@ export async function POST(
         if (userByEmail) {
           userId = userByEmail.id;
         } else {
-          return NextResponse.json(
-            {
-              success: false,
-              errorType: "UNKNOWN" as const,
-              error: "Session is no longer valid. Please sign in again.",
-            },
-            { status: 401 }
-          );
+          return jsonApiError("UNAUTHORIZED", "Session is no longer valid. Please sign in again.", 401);
         }
       } else {
-        return NextResponse.json(
-          {
-            success: false,
-            errorType: "UNKNOWN" as const,
-            error: "Session is no longer valid. Please sign in again.",
-          },
-          { status: 401 }
-        );
+        return jsonApiError("UNAUTHORIZED", "Session is no longer valid. Please sign in again.", 401);
       }
     }
 
@@ -93,10 +53,7 @@ export async function POST(
     const now = Date.now();
     const last = lastRequest.get(userId) || 0;
     if (now - last < 3000) {
-      return NextResponse.json(
-        { success: false, error: "Please wait a moment before scraping again" },
-        { status: 429 }
-      );
+      return jsonApiError("VALIDATION", "Please wait a moment before scraping again", 429);
     }
     lastRequest.set(userId, now);
 
@@ -105,88 +62,41 @@ export async function POST(
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
+      return jsonApiError("VALIDATION", "Invalid JSON body", 400);
     }
 
     const parsed = urlSchema.safeParse(body);
     if (!parsed.success) {
       const msg = parsed.error.issues[0]?.message || "Invalid URL";
-      return NextResponse.json(
-        { success: false, error: msg },
-        { status: 400 }
-      );
+      return jsonApiError("VALIDATION", msg, 400);
     }
 
     const { url } = parsed.data;
 
-    // ── Ethical check: robots.txt ──
-    const robotsCheck = await checkRobotsTxt(url);
-    if (!robotsCheck.allowed) {
+    const analysis = await analyzeWebsite(url);
+    if (!analysis.ok || !analysis.scraped || !analysis.seoAnalysis || !analysis.performance || !analysis.animalSpirit) {
+      const status =
+        analysis.errorType === "DISALLOWED_BY_ROBOTS"
+          ? 403
+          : analysis.errorType === "TIMEOUT" || analysis.errorType === "NETWORK"
+          ? 502
+          : 500;
+
       return NextResponse.json(
         {
           success: false,
-          statusCode: 0,
-          errorType: "DISALLOWED_BY_ROBOTS" as const,
-          error: robotsCheck.reason || "Scraping disallowed by robots.txt",
+          errorType: analysis.errorType || "UNKNOWN",
+          message: analysis.message || "Failed to analyze website",
+          error: analysis.message || "Failed to analyze website",
+          statusCode: analysis.statusCode,
         },
-        { status: 403 }
+        { status }
       );
     }
 
-    // ── Scrape with Axios + Cheerio (lightweight, serverless-safe) ──
-    let scraped;
-    try {
-      scraped = await scrapeSite(url);
-    } catch (error) {
-      console.error("SCRAPE NETWORK ERROR:", error);
-      return NextResponse.json(
-        {
-          success: false,
-          errorType: "NETWORK" as const,
-          statusCode: 0,
-          error:
-            "Failed to fetch the target URL. The site may be unavailable, blocking requests, or taking too long to respond.",
-        },
-        { status: 502 }
-      );
-    }
-
-    // ── SEO Analysis ──
-    const pageExtraction: PageExtraction = {
-      title: scraped.title,
-      meta: scraped.meta,
-      h1Count: scraped.h1Count,
-      h2Count: scraped.h2Count,
-      bodyText: scraped.bodyText,
-      totalImages: scraped.imageCount,
-      imagesWithoutAlt: scraped.imagesWithoutAlt,
-    };
-    const seoAnalysis = analyzeSeo(pageExtraction);
-
-    let animalSpiritResult = getFallbackAnimalSpirit({
-      title: scraped.title || "Untitled page",
-      seoScore: seoAnalysis.seoScore,
-      wordCount: seoAnalysis.metrics.wordCount,
-      totalTime: scraped.responseTime,
-      h1Count: scraped.h1Count,
-      h2Count: scraped.h2Count,
-    });
-
-    try {
-      animalSpiritResult = await generateAnimalSpirit({
-        title: scraped.title || "Untitled page",
-        seoScore: seoAnalysis.seoScore,
-        wordCount: seoAnalysis.metrics.wordCount,
-        totalTime: scraped.responseTime,
-        h1Count: scraped.h1Count,
-        h2Count: scraped.h2Count,
-      });
-    } catch (error) {
-      console.error("SCRAPE ANIMAL SPIRIT ERROR:", error);
-    }
+    const scraped = analysis.scraped;
+    const seoAnalysis = analysis.seoAnalysis;
+    const animalSpiritResult = analysis.animalSpirit;
 
     // Truncate body text to prevent oversized DB writes
     const bodyText = scraped.bodyText
@@ -194,7 +104,15 @@ export async function POST(
       : null;
 
     // ── Persist to DB ──
-    let requestLog;
+    let requestLog: {
+      id: string;
+      url: string;
+      method: string;
+      statusCode: number;
+      responseTime: number;
+      userId: string;
+      createdAt: Date;
+    };
     let scrapedData: {
       id: string;
       requestId: string;
@@ -214,18 +132,7 @@ export async function POST(
       createdAt: Date;
     };
     try {
-      requestLog = await prisma.requestLog.create({
-        data: {
-          url,
-          method: "GET",
-          statusCode: scraped.statusCode || 200,
-          responseTime: scraped.responseTime,
-          userId,
-        },
-      });
-
       const basePayload = {
-        requestId: requestLog.id,
         title: scraped.title || "No title found",
         headings: scraped.headings,
         meta: scraped.meta,
@@ -233,20 +140,47 @@ export async function POST(
       };
 
       try {
-        const fullScrapedData = await prisma.scrapedData.create({
-          data: {
-            ...basePayload,
-            animalType: animalSpiritResult.animal,
-            animalSpirit: `${animalSpiritResult.personality}. ${animalSpiritResult.insight}`,
-            seoScore: seoAnalysis.seoScore,
-            wordCount: seoAnalysis.metrics.wordCount,
-            h1Count: seoAnalysis.metrics.h1Count,
-            h2Count: seoAnalysis.metrics.h2Count,
-            metaLength: seoAnalysis.metrics.metaLength,
-            titleLength: seoAnalysis.metrics.titleLength,
-            missingAltCount: seoAnalysis.metrics.missingAltCount,
-          },
+        const txResult = await prisma.$transaction(async (tx) => {
+          const createdRequestLog = await tx.requestLog.create({
+            data: {
+              url,
+              method: "GET",
+              statusCode: scraped.statusCode || 200,
+              responseTime: scraped.responseTime,
+              userId,
+            },
+            select: {
+              id: true,
+              url: true,
+              method: true,
+              statusCode: true,
+              responseTime: true,
+              userId: true,
+              createdAt: true,
+            },
+          });
+
+          const fullScrapedData = await tx.scrapedData.create({
+            data: {
+              requestId: createdRequestLog.id,
+              ...basePayload,
+              animalType: animalSpiritResult.animal,
+              animalSpirit: `${animalSpiritResult.personality}. ${animalSpiritResult.insight}`,
+              seoScore: seoAnalysis.seoScore,
+              wordCount: seoAnalysis.metrics.wordCount,
+              h1Count: seoAnalysis.metrics.h1Count,
+              h2Count: seoAnalysis.metrics.h2Count,
+              metaLength: seoAnalysis.metrics.metaLength,
+              titleLength: seoAnalysis.metrics.titleLength,
+              missingAltCount: seoAnalysis.metrics.missingAltCount,
+            },
+          });
+
+          return { createdRequestLog, fullScrapedData };
         });
+
+        requestLog = txResult.createdRequestLog;
+        const fullScrapedData = txResult.fullScrapedData;
 
         scrapedData = {
           ...fullScrapedData,
@@ -261,25 +195,54 @@ export async function POST(
           missingAltCount: fullScrapedData.missingAltCount ?? null,
         };
       } catch (createError) {
-        const createCode = getErrorCode(createError);
+        const createInfo = classifyPrismaError(createError);
 
-        if (["P2021", "P2022"].includes(createCode || "")) {
+        if (createInfo.type === "DATABASE" && createInfo.status === 503) {
           console.warn(
             "SCRAPE LEGACY SCHEMA FALLBACK: saving without AI/extended metric fields"
           );
 
-          const legacyScrapedData = await prisma.scrapedData.create({
-            data: basePayload,
-            select: {
-              id: true,
-              requestId: true,
-              title: true,
-              headings: true,
-              meta: true,
-              bodyText: true,
-              createdAt: true,
-            },
+          const legacyTx = await prisma.$transaction(async (tx) => {
+            const createdRequestLog = await tx.requestLog.create({
+              data: {
+                url,
+                method: "GET",
+                statusCode: scraped.statusCode || 200,
+                responseTime: scraped.responseTime,
+                userId,
+              },
+              select: {
+                id: true,
+                url: true,
+                method: true,
+                statusCode: true,
+                responseTime: true,
+                userId: true,
+                createdAt: true,
+              },
+            });
+
+            const legacyScrapedData = await tx.scrapedData.create({
+              data: {
+                requestId: createdRequestLog.id,
+                ...basePayload,
+              },
+              select: {
+                id: true,
+                requestId: true,
+                title: true,
+                headings: true,
+                meta: true,
+                bodyText: true,
+                createdAt: true,
+              },
+            });
+
+            return { createdRequestLog, legacyScrapedData };
           });
+
+          requestLog = legacyTx.createdRequestLog;
+          const legacyScrapedData = legacyTx.legacyScrapedData;
 
           scrapedData = {
             ...legacyScrapedData,
@@ -299,51 +262,8 @@ export async function POST(
       }
     } catch (error) {
       console.error("SCRAPE DATABASE ERROR:", error);
-      const code = getErrorCode(error);
-
-      if (["P1000", "P1001", "P1002", "P1017"].includes(code || "")) {
-        return NextResponse.json(
-          {
-            success: false,
-            errorType: "UNKNOWN" as const,
-            error:
-              "Database connection failed. Check DATABASE_URL and database availability.",
-          },
-          { status: 503 }
-        );
-      }
-
-      if (["P2021", "P2022"].includes(code || "")) {
-        return NextResponse.json(
-          {
-            success: false,
-            errorType: "UNKNOWN" as const,
-            error:
-              "Database schema is out of sync. Run Prisma migrations (or db push) on the production database.",
-          },
-          { status: 503 }
-        );
-      }
-
-      if (code === "P2003") {
-        return NextResponse.json(
-          {
-            success: false,
-            errorType: "UNKNOWN" as const,
-            error: "Session is no longer valid. Please sign in again.",
-          },
-          { status: 401 }
-        );
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          errorType: "UNKNOWN" as const,
-          error: getErrorMessage(error),
-        },
-        { status: 500 }
-      );
+      const prismaError = classifyPrismaError(error);
+      return jsonApiError(prismaError.type, prismaError.message, prismaError.status);
     }
 
     return NextResponse.json({
@@ -362,9 +282,7 @@ export async function POST(
     });
   } catch (error: unknown) {
     console.error("SCRAPE ERROR:", error);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(error) },
-      { status: 500 }
-    );
+    const prismaError = classifyPrismaError(error);
+    return jsonApiError(prismaError.type, prismaError.message, prismaError.status);
   }
 }

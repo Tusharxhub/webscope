@@ -1,14 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import ComparisonOverview from "@/components/ComparisonOverview";
 import ComparisonTable from "@/components/ComparisonTable";
-import ComparisonCharts from "@/components/ComparisonCharts";
 import VerdictBanner from "@/components/VerdictBanner";
 import { CompareResponse } from "@/types";
+
+const ComparisonCharts = dynamic(() => import("@/components/charts/ComparisonCharts"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="h-72 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800 animate-pulse" />
+      <div className="h-72 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800 animate-pulse" />
+    </div>
+  ),
+});
 
 export default function ComparePage() {
   const [urlA, setUrlA] = useState("");
