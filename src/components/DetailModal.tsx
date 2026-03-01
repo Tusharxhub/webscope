@@ -23,7 +23,7 @@ export default function DetailModal({ log, onClose }: DetailModalProps) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-5 sm:p-6 animate-fade-in max-h-[85vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-4 sm:p-6 animate-fade-in max-h-[90vh] overflow-y-auto">
         {/* Close */}
         <button
           onClick={onClose}
@@ -43,13 +43,13 @@ export default function DetailModal({ log, onClose }: DetailModalProps) {
         </div>
 
         {/* Badges */}
-        <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5 pb-4 border-b border-zinc-200 dark:border-zinc-800">
           <StatusBadge code={log.statusCode} />
           <ResponseTimeBadge ms={log.responseTime} />
           <span className="inline-flex items-center px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 text-[10px] font-mono font-medium text-zinc-500 dark:text-zinc-500 uppercase">
             {log.method}
           </span>
-          <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-600 ml-auto">
+          <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-600 sm:ml-auto">
             #{log.id.substring(0, 7)}
           </span>
         </div>

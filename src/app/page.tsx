@@ -7,14 +7,14 @@ export default function LandingPage() {
       <div className="glow-top absolute inset-0 pointer-events-none" />
 
       {/* Hero — left aligned */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-8 pt-24 pb-32">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-20 sm:pb-32">
         <div className="animate-fade-in max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 text-xs font-mono tracking-wide mb-8 border border-zinc-200 dark:border-zinc-700/60">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-glow" />
             v1.0 — Next.js + Prisma + Neon
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-[1.1]">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-[1.1]">
             Measure the Web.
           </h1>
 
@@ -22,16 +22,16 @@ export default function LandingPage() {
             A developer-first observability tool. Scrape, inspect, and monitor HTTP requests — every response tells a story.
           </p>
 
-          <div className="flex items-center gap-3 mt-10">
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 mt-8 sm:mt-10">
             <Link
               href="/auth/register"
-              className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors duration-200 shadow-sm shadow-indigo-600/20"
+              className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors duration-200 shadow-sm shadow-indigo-600/20 text-center"
             >
               Get Started
             </Link>
             <Link
               href="/auth/login"
-              className="px-6 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700/60 transition-colors duration-200"
+              className="px-6 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700/60 transition-colors duration-200 text-center"
             >
               Sign In
             </Link>
@@ -39,7 +39,7 @@ export default function LandingPage() {
         </div>
 
         {/* Feature cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-24 animate-fade-in" style={{ animationDelay: "150ms" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16 sm:mt-24 animate-fade-in" style={{ animationDelay: "150ms" }}>
           {[
             {
               icon: (
@@ -84,7 +84,7 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 pb-8 text-xs text-zinc-400 dark:text-zinc-600 font-mono">
+      <footer className="relative z-10 px-4 sm:px-6 pb-8 text-xs text-zinc-400 dark:text-zinc-600 font-mono">
         WebScope — Every request tells a story.
       </footer>
     </div>

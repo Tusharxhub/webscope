@@ -48,89 +48,143 @@ function MiniSparkline({ ms }: { ms: number }) {
 
 export default function LogsTable({ logs, onRowClick, onDelete }: LogsTableProps) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-zinc-200 dark:border-zinc-800">
-            <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
-              Hash
-            </th>
-            <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
-              URL
-            </th>
-            <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
-              Status
-            </th>
-            <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
-              Method
-            </th>
-            <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
-              Time
-            </th>
-            <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
-              Date
-            </th>
-            <th className="py-2.5 px-3" />
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log, idx) => (
-            <tr
-              key={log.id}
-              onClick={() => onRowClick(log)}
-              className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 cursor-pointer transition-all duration-150 hover:-translate-y-[1px] animate-fade-in"
-              style={{ animationDelay: `${idx * 25}ms` }}
-            >
-              <td className="py-2.5 px-3">
-                <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-600">
-                  #{getRequestHash(log.id)}
-                </span>
-              </td>
-              <td className="py-2.5 px-3">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[220px]">
-                    {getDomain(log.url)}
-                  </span>
-                  <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-600 truncate max-w-[220px]">
-                    {log.url}
-                  </span>
-                </div>
-              </td>
-              <td className="py-2.5 px-3">
-                <StatusBadge code={log.statusCode} />
-              </td>
-              <td className="py-2.5 px-3">
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-500 uppercase">
-                  {log.method}
-                </span>
-              </td>
-              <td className="py-2.5 px-3">
-                <div className="flex items-center gap-2">
-                  <ResponseTimeBadge ms={log.responseTime} />
-                  <MiniSparkline ms={log.responseTime} />
-                </div>
-              </td>
-              <td className="py-2.5 px-3 text-[11px] font-mono text-zinc-400 dark:text-zinc-600">
+    <>
+      {/* ── Mobile: Card layout ── */}
+      <div className="space-y-3 md:hidden">
+        {logs.map((log, idx) => (
+          <div
+            key={log.id}
+            onClick={() => onRowClick(log)}
+            className="rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800/60 p-3.5 cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-150 animate-fade-in"
+            style={{ animationDelay: `${idx * 25}ms` }}
+          >
+            {/* Row 1: Domain + delete */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                  {getDomain(log.url)}
+                </p>
+                <p className="text-[11px] font-mono text-zinc-400 dark:text-zinc-600 truncate mt-0.5">
+                  {log.url}
+                </p>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(log.id);
+                }}
+                className="p-1.5 rounded-md text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors duration-150 flex-shrink-0"
+                title="Delete log"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Row 2: Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge code={log.statusCode} />
+              <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-500 uppercase">
+                {log.method}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <ResponseTimeBadge ms={log.responseTime} />
+                <MiniSparkline ms={log.responseTime} />
+              </div>
+              <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-600 ml-auto">
                 {formatDate(log.createdAt)}
-              </td>
-              <td className="py-2.5 px-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(log.id);
-                  }}
-                  className="p-1 rounded-md text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors duration-150"
-                  title="Delete log"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </td>
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Desktop: Table layout ── */}
+      <div className="overflow-x-auto hidden md:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 dark:border-zinc-800">
+              <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
+                Hash
+              </th>
+              <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
+                URL
+              </th>
+              <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
+                Status
+              </th>
+              <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
+                Method
+              </th>
+              <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
+                Time
+              </th>
+              <th className="text-left py-2.5 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest font-mono">
+                Date
+              </th>
+              <th className="py-2.5 px-3" />
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {logs.map((log, idx) => (
+              <tr
+                key={log.id}
+                onClick={() => onRowClick(log)}
+                className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 cursor-pointer transition-all duration-150 hover:-translate-y-[1px] animate-fade-in"
+                style={{ animationDelay: `${idx * 25}ms` }}
+              >
+                <td className="py-2.5 px-3">
+                  <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-600">
+                    #{getRequestHash(log.id)}
+                  </span>
+                </td>
+                <td className="py-2.5 px-3">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[220px]">
+                      {getDomain(log.url)}
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-600 truncate max-w-[220px]">
+                      {log.url}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-3">
+                  <StatusBadge code={log.statusCode} />
+                </td>
+                <td className="py-2.5 px-3">
+                  <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-500 uppercase">
+                    {log.method}
+                  </span>
+                </td>
+                <td className="py-2.5 px-3">
+                  <div className="flex items-center gap-2">
+                    <ResponseTimeBadge ms={log.responseTime} />
+                    <MiniSparkline ms={log.responseTime} />
+                  </div>
+                </td>
+                <td className="py-2.5 px-3 text-[11px] font-mono text-zinc-400 dark:text-zinc-600">
+                  {formatDate(log.createdAt)}
+                </td>
+                <td className="py-2.5 px-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(log.id);
+                    }}
+                    className="p-1 rounded-md text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors duration-150"
+                    title="Delete log"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

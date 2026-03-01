@@ -16,7 +16,7 @@ export default function ScrapeResultCard({ result }: ScrapeResultCardProps) {
     <div className="w-full animate-fade-in">
       <div className="rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
               {scrapedData.title || "No title"}
