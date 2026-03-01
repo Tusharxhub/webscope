@@ -52,7 +52,41 @@ export async function POST(
       );
     }
 
-    const userId = session.user.id;
+    // Resolve a valid DB user id from session to avoid stale-token FK errors
+    let userId = session.user.id;
+    const userExists = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!userExists) {
+      const sessionEmail = session.user.email;
+      if (sessionEmail) {
+        const userByEmail = await prisma.user.findUnique({
+          where: { email: sessionEmail },
+          select: { id: true },
+        });
+
+        if (userByEmail) {
+          userId = userByEmail.id;
+        } else {
+          return NextResponse.json(
+            {
+              success: false,
+              errorType: "UNKNOWN" as const,
+              error: "Session is no longer valid. Please sign in again.",
+            },
+            { status: 401 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            errorType: "UNKNOWN" as const,
+            error: "Session is no longer valid. Please sign in again.",
+          },
+          { status: 401 }
+        );
+      }
+    }
 
     // ── Rate limit: 1 request per 3 seconds per user ──
     const now = Date.now();
@@ -191,6 +225,17 @@ export async function POST(
               "Database schema is out of sync. Run Prisma migrations (or db push) on the production database.",
           },
           { status: 503 }
+        );
+      }
+
+      if (code === "P2003") {
+        return NextResponse.json(
+          {
+            success: false,
+            errorType: "UNKNOWN" as const,
+            error: "Session is no longer valid. Please sign in again.",
+          },
+          { status: 401 }
         );
       }
 
