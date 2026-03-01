@@ -3,21 +3,21 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ code }: StatusBadgeProps) {
-  let color = "bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-300";
+  let color = "text-zinc-400 border-zinc-300 dark:border-zinc-700";
 
   if (code >= 200 && code < 300) {
-    color = "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400";
+    color = "text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40";
   } else if (code >= 300 && code < 400) {
-    color = "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400";
+    color = "text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40";
   } else if (code >= 400 && code < 500) {
-    color = "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400";
+    color = "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40";
   } else if (code >= 500) {
-    color = "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400";
+    color = "text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40";
   }
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
-      {code || "N/A"}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono font-medium tracking-wide ${color}`}>
+      [ {code || "N/A"} ]
     </span>
   );
 }

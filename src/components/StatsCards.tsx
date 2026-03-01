@@ -5,43 +5,43 @@ interface StatsCardsProps {
   loading?: boolean;
 }
 
+function getTrend(value: number, type: "requests" | "time" | "rate"): { arrow: string; label: string; color: string } {
+  // Simulated trend — replace with real historical comparison if available
+  if (type === "requests") return { arrow: "↑", label: "active", color: "text-emerald-500" };
+  if (type === "time") {
+    if (value > 2500) return { arrow: "↑", label: "slow", color: "text-amber-500" };
+    return { arrow: "↓", label: "fast", color: "text-emerald-500" };
+  }
+  if (value >= 80) return { arrow: "↑", label: "healthy", color: "text-emerald-500" };
+  return { arrow: "↓", label: "degraded", color: "text-rose-500" };
+}
+
 export default function StatsCards({ stats, loading }: StatsCardsProps) {
   const cards = [
     {
       label: "Total Requests",
       value: stats.totalRequests,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      ),
-      color: "text-indigo-500 bg-indigo-100 dark:bg-indigo-500/20",
+      display: stats.totalRequests.toLocaleString(),
+      trend: getTrend(stats.totalRequests, "requests"),
+      accent: "border-l-indigo-500",
     },
     {
       label: "Avg Response Time",
-      value: `${stats.avgResponseTime}ms`,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      color: stats.avgResponseTime > 2000
-        ? "text-amber-500 bg-amber-100 dark:bg-amber-500/20"
-        : "text-blue-500 bg-blue-100 dark:bg-blue-500/20",
+      value: stats.avgResponseTime,
+      display: `${stats.avgResponseTime}ms`,
+      trend: getTrend(stats.avgResponseTime, "time"),
+      accent: stats.avgResponseTime > 2500 ? "border-l-amber-500" : "border-l-blue-500",
     },
     {
       label: "Success Rate",
-      value: `${stats.successRate}%`,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      color: stats.successRate >= 80
-        ? "text-emerald-500 bg-emerald-100 dark:bg-emerald-500/20"
+      value: stats.successRate,
+      display: `${stats.successRate}%`,
+      trend: getTrend(stats.successRate, "rate"),
+      accent: stats.successRate >= 80
+        ? "border-l-emerald-500"
         : stats.successRate >= 50
-        ? "text-amber-500 bg-amber-100 dark:bg-amber-500/20"
-        : "text-rose-500 bg-rose-100 dark:bg-rose-500/20",
+        ? "border-l-amber-500"
+        : "border-l-rose-500",
     },
   ];
 
@@ -50,20 +50,26 @@ export default function StatsCards({ stats, loading }: StatsCardsProps) {
       {cards.map((card) => (
         <div
           key={card.label}
-          className="rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-gray-200/60 dark:border-white/10 shadow-lg p-5 transition-all duration-300 hover:shadow-xl"
+          className={`rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 border-l-2 ${card.accent} p-4 transition-colors duration-200`}
         >
           {loading ? (
-            <div className="animate-pulse space-y-3">
-              <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-24" />
-              <div className="h-8 bg-gray-200 dark:bg-white/10 rounded w-16" />
+            <div className="space-y-3">
+              <div className="h-3 skeleton-shimmer rounded w-24" />
+              <div className="h-7 skeleton-shimmer rounded w-16" />
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-xl ${card.color}`}>{card.icon}</div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{card.label}</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-zinc-500 dark:text-zinc-500 uppercase tracking-wider font-medium">{card.label}</span>
+                <span className={`text-xs font-mono ${card.trend.color}`}>
+                  {card.trend.arrow} {card.trend.label}
+                </span>
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+              <p className={`text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100 ${
+                card.label === "Avg Response Time" && card.value > 2500 ? "amber-glow rounded px-1 -mx-1" : ""
+              }`}>
+                {card.display}
+              </p>
             </>
           )}
         </div>

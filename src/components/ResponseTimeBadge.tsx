@@ -3,17 +3,21 @@ interface ResponseTimeBadgeProps {
 }
 
 export default function ResponseTimeBadge({ ms }: ResponseTimeBadgeProps) {
-  let color = "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400";
+  let color = "text-emerald-600 dark:text-emerald-400";
+  let glow = "";
 
   if (ms > 3000) {
-    color = "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400";
+    color = "text-rose-600 dark:text-rose-400";
+  } else if (ms > 2500) {
+    color = "text-amber-600 dark:text-amber-400";
+    glow = "amber-glow rounded px-1";
   } else if (ms > 1500) {
-    color = "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400";
+    color = "text-amber-600 dark:text-amber-400";
   }
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
-      {ms}ms
+    <span className={`inline-flex items-center text-xs font-mono font-medium tabular-nums ${color} ${glow}`}>
+      {ms.toLocaleString()}ms
     </span>
   );
 }
