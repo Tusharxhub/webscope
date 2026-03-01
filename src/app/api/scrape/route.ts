@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
-import { launchBrowser } from "@/lib/browser";
+import { scrapeSite } from "@/lib/scraper";
 import { ScrapeResponse } from "@/types";
 
 // Simple in-memory rate limiter per user
@@ -16,10 +16,11 @@ const MAX_BODY_TEXT = 5000;
 // Allow up to 60 s on Vercel Pro / 10 s on Hobby
 export const maxDuration = 60;
 
-export async function POST(req: NextRequest): Promise<NextResponse<ScrapeResponse>> {
-  let browser: Awaited<ReturnType<typeof launchBrowser>> | null = null;
-
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<ScrapeResponse>> {
   try {
+    // ── Auth ──
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
 
     const userId = session.user.id;
 
-    // Rate limit: 1 request per 3 seconds per user
+    // ── Rate limit: 1 request per 3 seconds per user ──
     const now = Date.now();
     const last = lastRequest.get(userId) || 0;
     if (now - last < 3000) {
@@ -41,143 +42,55 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     }
     lastRequest.set(userId, now);
 
-    const body = await req.json();
-    const parsed = urlSchema.safeParse(body);
-    if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message || "Invalid URL";
-      return NextResponse.json({ success: false, error: msg }, { status: 400 });
-    }
-
-    const { url } = parsed.data;
-    const startTime = Date.now();
-
-    // ---- Puppeteer scrape (serverless-compatible) ----
-    browser = await launchBrowser();
-
-    const page = await browser.newPage();
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    );
-    await page.setViewport({ width: 1280, height: 800 });
-
-    let statusCode = 0;
-    page.on("response", (res) => {
-      if (res.url() === url || res.url() === url + "/") {
-        statusCode = res.status();
-      }
-    });
-
+    // ── Validate body ──
+    let body: unknown;
     try {
-      const response = await page.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 25000,
-      });
-      if (response) statusCode = response.status();
-    } catch (navError: unknown) {
-      const responseTime = Date.now() - startTime;
-      await browser.close();
-      browser = null;
-
-      const requestLog = await prisma.requestLog.create({
-        data: { url, method: "GET", statusCode: statusCode || 0, responseTime, userId },
-      });
-
-      const errorMsg =
-        navError instanceof Error ? navError.message : "Failed to load page";
-
+      body = await req.json();
+    } catch {
       return NextResponse.json(
-        {
-          success: false,
-          error: errorMsg,
-          data: {
-            requestLog: { ...requestLog, createdAt: requestLog.createdAt.toISOString() },
-            scrapedData: {
-              id: "",
-              requestId: requestLog.id,
-              title: "",
-              headings: [],
-              meta: null,
-              bodyText: null,
-              seoScore: null,
-              wordCount: null,
-              h1Count: null,
-              h2Count: null,
-              metaLength: null,
-              titleLength: null,
-              missingAltCount: null,
-              createdAt: new Date().toISOString(),
-            },
-          },
-        },
-        { status: 502 }
+        { success: false, error: "Invalid JSON body" },
+        { status: 400 }
       );
     }
 
-    // Extract data from the fully-rendered page
-    const extractedData = await page.evaluate(() => {
-      const title = document.title?.trim() || "";
+    const parsed = urlSchema.safeParse(body);
+    if (!parsed.success) {
+      const msg = parsed.error.issues[0]?.message || "Invalid URL";
+      return NextResponse.json(
+        { success: false, error: msg },
+        { status: 400 }
+      );
+    }
 
-      const h1Elements = Array.from(document.querySelectorAll("h1"));
-      const h2Elements = Array.from(document.querySelectorAll("h2"));
-      const headings = [
-        ...h1Elements.map((el) => `[H1] ${el.innerText.trim()}`),
-        ...h2Elements.map((el) => `[H2] ${el.innerText.trim()}`),
-      ].filter((h) => h.replace(/\[H[12]\]\s*/, "").length > 0);
+    const { url } = parsed.data;
 
-      const metaTag = document.querySelector('meta[name="description"]');
-      const meta = metaTag?.getAttribute("content")?.trim() || null;
-
-      // Gather visible text content from the body
-      const bodyText = document.body?.innerText?.trim() || null;
-
-      // Image alt analysis
-      const images = Array.from(document.querySelectorAll("img"));
-      const totalImages = images.length;
-      const imagesWithoutAlt = images.filter((img) => {
-        const alt = img.getAttribute("alt");
-        return alt === null || alt.trim() === "";
-      }).length;
-
-      return {
-        title,
-        headings,
-        meta,
-        bodyText,
-        h1Count: h1Elements.length,
-        h2Count: h2Elements.length,
-        totalImages,
-        imagesWithoutAlt,
-      };
-    });
-
-    const responseTime = Date.now() - startTime;
-
-    await browser.close();
-    browser = null;
-
-    // Truncate body text to prevent oversized DB writes
-    const bodyText = extractedData.bodyText
-      ? extractedData.bodyText.substring(0, MAX_BODY_TEXT)
-      : null;
+    // ── Scrape with Axios + Cheerio (lightweight, serverless-safe) ──
+    const scraped = await scrapeSite(url);
 
     // ── SEO Analysis ──
     const pageExtraction: PageExtraction = {
-      title: extractedData.title,
-      meta: extractedData.meta,
-      h1Count: extractedData.h1Count,
-      h2Count: extractedData.h2Count,
-      bodyText: extractedData.bodyText,
-      totalImages: extractedData.totalImages,
-      imagesWithoutAlt: extractedData.imagesWithoutAlt,
+      title: scraped.title,
+      meta: scraped.meta,
+      h1Count: scraped.h1Count,
+      h2Count: scraped.h2Count,
+      bodyText: scraped.bodyText,
+      totalImages: scraped.imageCount,
+      imagesWithoutAlt: scraped.imagesWithoutAlt,
     };
     const seoAnalysis = analyzeSeo(pageExtraction);
 
+    // Truncate body text to prevent oversized DB writes
+    const bodyText = scraped.bodyText
+      ? scraped.bodyText.substring(0, MAX_BODY_TEXT)
+      : null;
+
+    // ── Persist to DB ──
     const requestLog = await prisma.requestLog.create({
       data: {
         url,
         method: "GET",
-        statusCode: statusCode || 200,
-        responseTime,
+        statusCode: scraped.statusCode || 200,
+        responseTime: scraped.responseTime,
         userId,
       },
     });
@@ -185,9 +98,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     const scrapedData = await prisma.scrapedData.create({
       data: {
         requestId: requestLog.id,
-        title: extractedData.title || "No title found",
-        headings: extractedData.headings,
-        meta: extractedData.meta,
+        title: scraped.title || "No title found",
+        headings: scraped.headings,
+        meta: scraped.meta,
         bodyText,
         seoScore: seoAnalysis.seoScore,
         wordCount: seoAnalysis.metrics.wordCount,
@@ -202,19 +115,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     return NextResponse.json({
       success: true,
       data: {
-        requestLog: { ...requestLog, createdAt: requestLog.createdAt.toISOString() },
-        scrapedData: { ...scrapedData, createdAt: scrapedData.createdAt.toISOString() },
+        requestLog: {
+          ...requestLog,
+          createdAt: requestLog.createdAt.toISOString(),
+        },
+        scrapedData: {
+          ...scrapedData,
+          createdAt: scrapedData.createdAt.toISOString(),
+        },
         seoAnalysis,
       },
     });
   } catch (error: unknown) {
-    console.error("Scrape error:", error);
-    const message = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
-  } finally {
-    // Prevent memory leaks — always close browser
-    if (browser) {
-      try { await browser.close(); } catch { /* ignore */ }
-    }
+    console.error("SCRAPE ERROR:", error);
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 }
+    );
   }
 }

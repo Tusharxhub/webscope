@@ -1,123 +1,56 @@
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
-import { launchBrowser } from "@/lib/browser";
+import { scrapeSite } from "@/lib/scraper";
 import { SiteMetrics, ComparisonVerdict } from "@/types";
-import type { Browser } from "puppeteer-core";
 
 /**
- * Scrape a single URL and return a SiteMetrics object.
- * Accepts an existing browser instance to avoid launching multiple browsers.
+ * Convert a scraped page into SiteMetrics with SEO analysis.
  */
-async function scrapePage(url: string, browser: Browser): Promise<SiteMetrics> {
-  const page = await browser.newPage();
-  await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  );
+function toSiteMetrics(
+  scraped: Awaited<ReturnType<typeof scrapeSite>>
+): SiteMetrics {
+  const pageExtraction: PageExtraction = {
+    title: scraped.title,
+    meta: scraped.meta,
+    h1Count: scraped.h1Count,
+    h2Count: scraped.h2Count,
+    bodyText: scraped.bodyText,
+    totalImages: scraped.imageCount,
+    imagesWithoutAlt: scraped.imagesWithoutAlt,
+  };
+  const seo = analyzeSeo(pageExtraction);
 
-  try {
-    const startTime = Date.now();
-
-    // Track timing phases
-    let serverTime = 0;
-
-    page.on("response", (res) => {
-      if (res.url() === url || res.url() === url + "/") {
-        serverTime = Date.now() - startTime;
-      }
-    });
-
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
-
-    const totalTime = Date.now() - startTime;
-    const parseTime = totalTime - serverTime;
-
-    // Extract page data
-    const extracted = await page.evaluate(() => {
-      const title = document.title?.trim() || "";
-      const metaTag = document.querySelector('meta[name="description"]');
-      const meta = metaTag?.getAttribute("content")?.trim() || null;
-      const bodyText = document.body?.innerText?.trim() || null;
-
-      const h1Count = document.querySelectorAll("h1").length;
-      const h2Count = document.querySelectorAll("h2").length;
-      const scriptCount = document.querySelectorAll("script").length;
-
-      const images = Array.from(document.querySelectorAll("img"));
-      const imageCount = images.length;
-      const imagesWithoutAlt = images.filter((img) => {
-        const alt = img.getAttribute("alt");
-        return alt === null || alt.trim() === "";
-      }).length;
-
-      // Approximate content size (bytes)
-      const contentSize = new Blob([document.documentElement.outerHTML]).size;
-
-      return {
-        title,
-        meta,
-        bodyText,
-        h1Count,
-        h2Count,
-        scriptCount,
-        imageCount,
-        imagesWithoutAlt,
-        contentSize,
-      };
-    });
-
-    // SEO analysis
-    const pageExtraction: PageExtraction = {
-      title: extracted.title,
-      meta: extracted.meta,
-      h1Count: extracted.h1Count,
-      h2Count: extracted.h2Count,
-      bodyText: extracted.bodyText,
-      totalImages: extracted.imageCount,
-      imagesWithoutAlt: extracted.imagesWithoutAlt,
-    };
-    const seo = analyzeSeo(pageExtraction);
-
-    return {
-      url,
-      seoScore: seo.seoScore,
-      totalTime,
-      serverTime,
-      parseTime,
-      wordCount: seo.metrics.wordCount,
-      h1Count: extracted.h1Count,
-      h2Count: extracted.h2Count,
-      contentSize: extracted.contentSize,
-      scriptCount: extracted.scriptCount,
-      imageCount: extracted.imageCount,
-    };
-  } finally {
-    await page.close();
-  }
+  return {
+    url: scraped.url,
+    seoScore: seo.seoScore,
+    totalTime: scraped.responseTime,
+    serverTime: scraped.responseTime,
+    parseTime: 0,
+    wordCount: seo.metrics.wordCount,
+    h1Count: scraped.h1Count,
+    h2Count: scraped.h2Count,
+    contentSize: scraped.contentSize,
+    scriptCount: scraped.scriptCount,
+    imageCount: scraped.imageCount,
+  };
 }
 
 /**
- * Scrape two URLs using a single browser instance and return both metrics.
- * Uses one Chromium process to stay within serverless memory limits.
+ * Scrape two URLs in parallel using Axios + Cheerio and return both metrics.
+ * Lightweight — no Puppeteer/Chromium binary needed.
  */
 export async function scrapeBothSites(
   urlA: string,
   urlB: string
 ): Promise<{ siteA: SiteMetrics; siteB: SiteMetrics }> {
-  let browser: Awaited<ReturnType<typeof launchBrowser>> | null = null;
+  const [rawA, rawB] = await Promise.all([
+    scrapeSite(urlA),
+    scrapeSite(urlB),
+  ]);
 
-  try {
-    browser = await launchBrowser();
-    const siteA = await scrapePage(urlA, browser);
-    const siteB = await scrapePage(urlB, browser);
-    return { siteA, siteB };
-  } finally {
-    if (browser) {
-      try {
-        await browser.close();
-      } catch {
-        /* ignore */
-      }
-    }
-  }
+  return {
+    siteA: toSiteMetrics(rawA),
+    siteB: toSiteMetrics(rawB),
+  };
 }
 
 /**
