@@ -11,11 +11,13 @@ export async function scrapeSiteMetrics(url: string): Promise<SiteMetrics> {
   let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
 
   try {
+    chromium.setGraphicsMode = false;
+
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 1280, height: 800 },
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: "shell",
     });
 
     const page = await browser.newPage();
@@ -34,7 +36,7 @@ export async function scrapeSiteMetrics(url: string): Promise<SiteMetrics> {
       }
     });
 
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
 
     const totalTime = Date.now() - startTime;
     const parseTime = totalTime - serverTime;

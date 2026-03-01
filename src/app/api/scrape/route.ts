@@ -14,6 +14,9 @@ const lastRequest = new Map<string, number>();
 // Max body text length stored in DB (characters)
 const MAX_BODY_TEXT = 5000;
 
+// Allow up to 60 s on Vercel Pro / 10 s on Hobby
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest): Promise<NextResponse<ScrapeResponse>> {
   let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
 
@@ -50,11 +53,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     const startTime = Date.now();
 
     // ---- Puppeteer scrape (serverless-compatible) ----
+    chromium.setGraphicsMode = false;
+
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 1280, height: 800 },
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: "shell",
     });
 
     const page = await browser.newPage();
@@ -72,8 +77,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
 
     try {
       const response = await page.goto(url, {
-        waitUntil: "networkidle2",
-        timeout: 30000,
+        waitUntil: "domcontentloaded",
+        timeout: 25000,
       });
       if (response) statusCode = response.status();
     } catch (navError: unknown) {

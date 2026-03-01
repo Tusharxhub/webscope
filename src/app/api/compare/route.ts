@@ -9,6 +9,9 @@ import { CompareResponse } from "@/types";
 // Simple in-memory rate limiter per user
 const lastCompare = new Map<string, number>();
 
+// Allow up to 60 s on Vercel Pro / 10 s on Hobby
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest): Promise<NextResponse<CompareResponse>> {
   try {
     const session = await getServerSession(authOptions);
