@@ -5,6 +5,36 @@ import { prisma } from "@/lib/prisma";
 import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 import { ScrapeResponse } from "@/types";
+import { existsSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
+import { execSync } from "child_process";
+
+function findChromePath(): string | undefined {
+  // 1. Env override
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
+
+  // 2. Puppeteer cache under current user home
+  const cached = join(homedir(), ".cache", "puppeteer");
+  // Walk the cache dir for the chrome binary
+  try {
+    const result = execSync(`find "${cached}" -name chrome -type f 2>/dev/null | head -1`, { encoding: "utf-8" }).trim();
+    if (result && existsSync(result)) return result;
+  } catch {}
+
+  // 3. Common system paths
+  const systemPaths = [
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+  ];
+  for (const p of systemPaths) {
+    if (existsSync(p)) return p;
+  }
+
+  return undefined;
+}
 
 // Simple in-memory rate limiter per user
 const lastRequest = new Map<string, number>();
@@ -48,9 +78,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
     const startTime = Date.now();
 
     // ---- Puppeteer scrape ----
+    const chromePath = findChromePath();
     browser = await puppeteer.launch({
       headless: true,
-      executablePath: puppeteer.executablePath(),
+      ...(chromePath ? { executablePath: chromePath } : {}),
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
