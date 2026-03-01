@@ -7,12 +7,13 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate && npx puppeteer browsers install chrome"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@prisma/extension-accelerate": "^3.0.1",
+    "@sparticuz/chromium": "^143.0.4",
     "@types/pg": "^8.18.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
@@ -22,7 +23,7 @@
     "next-auth": "^4.24.13",
     "pg": "^8.19.0",
     "prisma": "^7.4.2",
-    "puppeteer": "^24.37.5",
+    "puppeteer-core": "^24.37.5",
     "react": "^18",
     "react-dom": "^18",
     "zod": "^4.3.6"
