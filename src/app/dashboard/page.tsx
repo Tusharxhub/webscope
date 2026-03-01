@@ -95,6 +95,7 @@ export default function DashboardPage() {
         fetchStats();
         setPage(1);
       } else {
+        setLastResult(data); // keep for robots warning UI
         setError(data.error || "Something went wrong");
         if (data.data) { fetchLogs(1); fetchStats(); setPage(1); }
       }
@@ -155,7 +156,25 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          {error && (
+          {/* Robots.txt warning */}
+          {lastResult?.errorType === "DISALLOWED_BY_ROBOTS" && (
+            <div className="mt-3 p-3 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 animate-fade-in">
+              <div className="flex items-start gap-2.5">
+                <span className="text-amber-500 text-base leading-none mt-0.5">⚠️</span>
+                <div>
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                    This website disallows automated scraping via robots.txt.
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-500 font-mono mt-1">
+                    WebScope respects robots.txt directives. SEO analysis is not available for this site.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Generic error */}
+          {error && lastResult?.errorType !== "DISALLOWED_BY_ROBOTS" && (
             <div className="mt-3 p-2.5 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-mono animate-fade-in">
               <div className="flex items-center gap-2">
                 <span className="text-rose-500">✕</span>

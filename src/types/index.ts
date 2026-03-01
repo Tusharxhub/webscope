@@ -67,6 +67,8 @@ export interface ScrapedDataEntry {
   createdAt: string;
 }
 
+export type ScrapeErrorType = "DISALLOWED_BY_ROBOTS" | "NETWORK" | "VALIDATION" | "UNKNOWN";
+
 export interface ScrapeResponse {
   success: boolean;
   data?: {
@@ -75,6 +77,10 @@ export interface ScrapeResponse {
     seoAnalysis?: SeoAnalysis;
   };
   error?: string;
+  /** Machine-readable error category (present when success is false). */
+  errorType?: ScrapeErrorType;
+  /** HTTP status code from the target site (0 if request was blocked before fetch). */
+  statusCode?: number;
 }
 
 export interface StatsData {

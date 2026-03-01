@@ -5,6 +5,7 @@ import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
 import { scrapeSite } from "@/lib/scraper";
+import { checkRobotsTxt } from "@/lib/robotsChecker";
 import { ScrapeResponse } from "@/types";
 
 // Simple in-memory rate limiter per user
@@ -63,6 +64,20 @@ export async function POST(
     }
 
     const { url } = parsed.data;
+
+    // ── Ethical check: robots.txt ──
+    const robotsCheck = await checkRobotsTxt(url);
+    if (!robotsCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          statusCode: 0,
+          errorType: "DISALLOWED_BY_ROBOTS" as const,
+          error: robotsCheck.reason || "Scraping disallowed by robots.txt",
+        },
+        { status: 403 }
+      );
+    }
 
     // ── Scrape with Axios + Cheerio (lightweight, serverless-safe) ──
     const scraped = await scrapeSite(url);
