@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import SessionProvider from "@/components/SessionProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "WebScope — Web Scraper Dashboard",
-  description: "Analyze any website in seconds. Scrape titles, headings, and monitor request history in real time.",
+  title: "WebScope Pro — Web Scraper Dashboard",
+  description: "Analyze any website in seconds. Scrape titles, headings, meta descriptions, and monitor request history in real time.",
 };
 
 export default function RootLayout({
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

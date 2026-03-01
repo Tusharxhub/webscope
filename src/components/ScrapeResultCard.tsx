@@ -10,7 +10,7 @@ export default function ScrapeResultCard({ result }: ScrapeResultCardProps) {
   if (!result.data) return null;
 
   const { requestLog, scrapedData } = result.data;
-  const headings = scrapedData.content ? scrapedData.content.split(" | ") : [];
+  const headings: string[] = scrapedData.headings ?? [];
 
   return (
     <div className="w-full animate-fadeIn">

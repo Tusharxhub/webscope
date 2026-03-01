@@ -6,19 +6,33 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String       @id @default(uuid())
+  name      String?
+  email     String       @unique
+  password  String
+  logs      RequestLog[]
+  createdAt DateTime     @default(now())
+}
+
 model RequestLog {
-  id           String   @id @default(uuid())
+  id           String        @id @default(uuid())
   url          String
   method       String
   statusCode   Int
   responseTime Int
-  createdAt    DateTime @default(now())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  scrapedData  ScrapedData[]
+  createdAt    DateTime      @default(now())
 }
 
 model ScrapedData {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   requestId String
+  request   RequestLog @relation(fields: [requestId], references: [id], onDelete: Cascade)
   title     String
-  content   String?
-  createdAt DateTime @default(now())
+  headings  String[]
+  meta      String?
+  createdAt DateTime   @default(now())
 }
