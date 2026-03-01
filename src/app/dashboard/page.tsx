@@ -16,6 +16,22 @@ import SeoChecklist from "@/components/SeoChecklist";
 import SeoMetricsGrid from "@/components/SeoMetricsGrid";
 import { ScrapeResponse, RequestLogEntry, StatsData } from "@/types";
 
+function getAnimalEmoji(animal?: string | null): string {
+  if (!animal) return "🧠";
+
+  const normalized = animal.toLowerCase();
+  if (normalized.includes("hawk") || normalized.includes("eagle") || normalized.includes("falcon")) return "🦅";
+  if (normalized.includes("wolf")) return "🐺";
+  if (normalized.includes("otter")) return "🦦";
+  if (normalized.includes("tortoise") || normalized.includes("turtle")) return "🐢";
+  if (normalized.includes("lion")) return "🦁";
+  if (normalized.includes("owl")) return "🦉";
+  if (normalized.includes("fox")) return "🦊";
+  if (normalized.includes("cheetah") || normalized.includes("leopard")) return "🐆";
+
+  return "🧠";
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [url, setUrl] = useState("");
@@ -245,6 +261,27 @@ export default function DashboardPage() {
                 </h3>
                 <SeoMetricsGrid metrics={lastResult.data.seoAnalysis.metrics} />
               </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Website Animal Spirit */}
+        {lastResult?.data?.scrapedData?.animalType && lastResult?.data?.scrapedData?.animalSpirit && (
+          <Card className="p-4 sm:p-5 mb-6 animate-fade-in border-indigo-200/60 dark:border-indigo-900/70 shadow-[0_0_24px_rgba(99,102,241,0.10)] dark:shadow-[0_0_28px_rgba(99,102,241,0.18)]">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-lg leading-none">{getAnimalEmoji(lastResult.data.scrapedData.animalType)}</span>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Website Animal Spirit
+              </h2>
+            </div>
+
+            <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/70 p-4">
+              <p className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
+                {lastResult.data.scrapedData.animalType}
+              </p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-mono">
+                {lastResult.data.scrapedData.animalSpirit}
+              </p>
             </div>
           </Card>
         )}

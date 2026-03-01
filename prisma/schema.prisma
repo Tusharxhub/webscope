@@ -36,6 +36,8 @@ model ScrapedData {
   headings        String[]
   meta            String?
   bodyText        String?
+  animalSpirit    String?
+  animalType      String?
   seoScore        Int?
   wordCount       Int?
   h1Count         Int?

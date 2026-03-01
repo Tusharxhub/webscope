@@ -189,6 +189,9 @@ DATABASE_URL="postgresql://user:password@host:5432/dbname?sslmode=require"
 # NextAuth
 NEXTAUTH_SECRET="your-random-secret-here"
 NEXTAUTH_URL="http://localhost:3000"
+
+# Gemini API (server-side only)
+GEMINI_API_KEY="your_key_here"
 ```
 
 > Generate a secret: `openssl rand -base64 32`
@@ -270,6 +273,9 @@ npm start       # Starts production server
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `NEXTAUTH_SECRET` | Yes | Random string for JWT signing |
 | `NEXTAUTH_URL` | Yes | Base URL of the app (`http://localhost:3000`) |
+| `GEMINI_API_KEY` | No* | Google Gemini API key for Website Animal Spirit generation (used server-side only) |
+
+\* If omitted, WebScope uses deterministic fallback animal spirits instead of AI-generated output.
 
 ---
 

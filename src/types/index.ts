@@ -37,6 +37,12 @@ export interface SeoAnalysis {
   metrics: SeoMetrics;
 }
 
+export interface AnimalSpiritData {
+  animal: string;
+  personality: string;
+  insight: string;
+}
+
 // ── Data Entries ──
 
 export interface RequestLogEntry {
@@ -57,6 +63,8 @@ export interface ScrapedDataEntry {
   headings: string[];
   meta: string | null;
   bodyText: string | null;
+  animalSpirit: string | null;
+  animalType: string | null;
   seoScore: number | null;
   wordCount: number | null;
   h1Count: number | null;

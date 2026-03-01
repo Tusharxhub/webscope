@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { analyzeSeo, PageExtraction } from "@/lib/seoAnalyzer";
 import { scrapeSite } from "@/lib/scraper";
 import { checkRobotsTxt } from "@/lib/robotsChecker";
+import { generateAnimalSpirit, getFallbackAnimalSpirit } from "@/lib/animalSpirit";
 import { ScrapeResponse } from "@/types";
 
 // Simple in-memory rate limiter per user
@@ -165,6 +166,28 @@ export async function POST(
     };
     const seoAnalysis = analyzeSeo(pageExtraction);
 
+    let animalSpiritResult = getFallbackAnimalSpirit({
+      title: scraped.title || "Untitled page",
+      seoScore: seoAnalysis.seoScore,
+      wordCount: seoAnalysis.metrics.wordCount,
+      totalTime: scraped.responseTime,
+      h1Count: scraped.h1Count,
+      h2Count: scraped.h2Count,
+    });
+
+    try {
+      animalSpiritResult = await generateAnimalSpirit({
+        title: scraped.title || "Untitled page",
+        seoScore: seoAnalysis.seoScore,
+        wordCount: seoAnalysis.metrics.wordCount,
+        totalTime: scraped.responseTime,
+        h1Count: scraped.h1Count,
+        h2Count: scraped.h2Count,
+      });
+    } catch (error) {
+      console.error("SCRAPE ANIMAL SPIRIT ERROR:", error);
+    }
+
     // Truncate body text to prevent oversized DB writes
     const bodyText = scraped.bodyText
       ? scraped.bodyText.substring(0, MAX_BODY_TEXT)
@@ -172,7 +195,24 @@ export async function POST(
 
     // ── Persist to DB ──
     let requestLog;
-    let scrapedData;
+    let scrapedData: {
+      id: string;
+      requestId: string;
+      title: string;
+      headings: string[];
+      meta: string | null;
+      bodyText: string | null;
+      animalType: string | null;
+      animalSpirit: string | null;
+      seoScore: number | null;
+      wordCount: number | null;
+      h1Count: number | null;
+      h2Count: number | null;
+      metaLength: number | null;
+      titleLength: number | null;
+      missingAltCount: number | null;
+      createdAt: Date;
+    };
     try {
       requestLog = await prisma.requestLog.create({
         data: {
@@ -184,22 +224,79 @@ export async function POST(
         },
       });
 
-      scrapedData = await prisma.scrapedData.create({
-        data: {
-          requestId: requestLog.id,
-          title: scraped.title || "No title found",
-          headings: scraped.headings,
-          meta: scraped.meta,
-          bodyText,
-          seoScore: seoAnalysis.seoScore,
-          wordCount: seoAnalysis.metrics.wordCount,
-          h1Count: seoAnalysis.metrics.h1Count,
-          h2Count: seoAnalysis.metrics.h2Count,
-          metaLength: seoAnalysis.metrics.metaLength,
-          titleLength: seoAnalysis.metrics.titleLength,
-          missingAltCount: seoAnalysis.metrics.missingAltCount,
-        },
-      });
+      const basePayload = {
+        requestId: requestLog.id,
+        title: scraped.title || "No title found",
+        headings: scraped.headings,
+        meta: scraped.meta,
+        bodyText,
+      };
+
+      try {
+        const fullScrapedData = await prisma.scrapedData.create({
+          data: {
+            ...basePayload,
+            animalType: animalSpiritResult.animal,
+            animalSpirit: `${animalSpiritResult.personality}. ${animalSpiritResult.insight}`,
+            seoScore: seoAnalysis.seoScore,
+            wordCount: seoAnalysis.metrics.wordCount,
+            h1Count: seoAnalysis.metrics.h1Count,
+            h2Count: seoAnalysis.metrics.h2Count,
+            metaLength: seoAnalysis.metrics.metaLength,
+            titleLength: seoAnalysis.metrics.titleLength,
+            missingAltCount: seoAnalysis.metrics.missingAltCount,
+          },
+        });
+
+        scrapedData = {
+          ...fullScrapedData,
+          animalType: fullScrapedData.animalType ?? null,
+          animalSpirit: fullScrapedData.animalSpirit ?? null,
+          seoScore: fullScrapedData.seoScore ?? null,
+          wordCount: fullScrapedData.wordCount ?? null,
+          h1Count: fullScrapedData.h1Count ?? null,
+          h2Count: fullScrapedData.h2Count ?? null,
+          metaLength: fullScrapedData.metaLength ?? null,
+          titleLength: fullScrapedData.titleLength ?? null,
+          missingAltCount: fullScrapedData.missingAltCount ?? null,
+        };
+      } catch (createError) {
+        const createCode = getErrorCode(createError);
+
+        if (["P2021", "P2022"].includes(createCode || "")) {
+          console.warn(
+            "SCRAPE LEGACY SCHEMA FALLBACK: saving without AI/extended metric fields"
+          );
+
+          const legacyScrapedData = await prisma.scrapedData.create({
+            data: basePayload,
+            select: {
+              id: true,
+              requestId: true,
+              title: true,
+              headings: true,
+              meta: true,
+              bodyText: true,
+              createdAt: true,
+            },
+          });
+
+          scrapedData = {
+            ...legacyScrapedData,
+            animalType: null,
+            animalSpirit: null,
+            seoScore: null,
+            wordCount: null,
+            h1Count: null,
+            h2Count: null,
+            metaLength: null,
+            titleLength: null,
+            missingAltCount: null,
+          };
+        } else {
+          throw createError;
+        }
+      }
     } catch (error) {
       console.error("SCRAPE DATABASE ERROR:", error);
       const code = getErrorCode(error);
