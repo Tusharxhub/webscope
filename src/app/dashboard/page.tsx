@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Button from "@/components/Button";
@@ -59,22 +58,17 @@ export default function DashboardPage() {
   useEffect(() => { fetchLogs(page); }, [fetchLogs, page]);
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  // Socket.io real-time
+  // Poll for real-time updates (Vercel doesn't support WebSockets)
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    let socket: Socket | null = null;
-    const connectSocket = async () => {
-      try {
-        await fetch("/api/socketio");
-        socket = io({ path: "/api/socketio", addTrailingSlash: false });
-        socket.on("new-log", (log: RequestLogEntry) => {
-          setLogs((prev) => [log, ...prev.slice(0, 9)]);
-          setStats((s) => ({ ...s, totalRequests: s.totalRequests + 1 }));
-        });
-      } catch { /* silent */ }
+    pollRef.current = setInterval(() => {
+      fetchLogs(page);
+      fetchStats();
+    }, 5000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
     };
-    connectSocket();
-    return () => { socket?.disconnect(); };
-  }, []);
+  }, [fetchLogs, fetchStats, page]);
 
   const handleScrape = async () => {
     setError("");

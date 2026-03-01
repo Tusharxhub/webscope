@@ -193,19 +193,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScrapeRespons
       },
     });
 
-    // Emit via socket (best effort)
-    try {
-      const { getIO } = await import("@/lib/socket");
-      const io = getIO();
-      if (io) {
-        io.emit("new-log", {
-          ...requestLog,
-          createdAt: requestLog.createdAt.toISOString(),
-          scrapedData: [{ ...scrapedData, createdAt: scrapedData.createdAt.toISOString() }],
-        });
-      }
-    } catch { /* ignore */ }
-
     return NextResponse.json({
       success: true,
       data: {
