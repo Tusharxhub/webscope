@@ -7,12 +7,13 @@ datasource db {
 }
 
 model User {
-  id        String       @id @default(uuid())
-  name      String?
-  email     String       @unique
-  password  String
-  logs      RequestLog[]
-  createdAt DateTime     @default(now())
+  id          String       @id @default(uuid())
+  name        String?
+  email       String       @unique
+  password    String
+  logs        RequestLog[]
+  comparisons Comparison[]
+  createdAt   DateTime     @default(now())
 }
 
 model RequestLog {
@@ -43,4 +44,13 @@ model ScrapedData {
   titleLength     Int?
   missingAltCount Int?
   createdAt       DateTime   @default(now())
+}
+
+model Comparison {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  urlA      String
+  urlB      String
+  createdAt DateTime @default(now())
 }

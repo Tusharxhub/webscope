@@ -90,3 +90,45 @@ export interface PaginatedLogs {
   pageSize: number;
   totalPages: number;
 }
+
+// ── Comparison ──
+
+export interface SiteMetrics {
+  url: string;
+  seoScore: number;
+  totalTime: number;
+  serverTime: number;
+  parseTime: number;
+  wordCount: number;
+  h1Count: number;
+  h2Count: number;
+  contentSize: number;
+  scriptCount: number;
+  imageCount: number;
+}
+
+export interface ComparisonVerdict {
+  faster: "A" | "B";
+  betterSEO: "A" | "B";
+  largerContent: "A" | "B";
+  cleanerStructure: "A" | "B";
+}
+
+export interface ComparisonResult {
+  siteA: SiteMetrics;
+  siteB: SiteMetrics;
+  comparison: ComparisonVerdict;
+}
+
+export interface CompareResponse {
+  success: boolean;
+  data?: ComparisonResult;
+  error?: string;
+}
+
+export interface ComparisonHistoryEntry {
+  id: string;
+  urlA: string;
+  urlB: string;
+  createdAt: string;
+}
