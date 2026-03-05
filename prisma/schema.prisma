@@ -69,7 +69,7 @@ model Comparison {
 
 model PageMetadata {
   id            String   @id @default(uuid())
-  url           String
+  siteUrl       String
   pageUrl       String
   title         String?
   metaDesc      String?
@@ -81,5 +81,5 @@ model PageMetadata {
   responseTime  Int
   createdAt     DateTime @default(now())
 
-  @@index([url])
+  @@index([siteUrl])
 }

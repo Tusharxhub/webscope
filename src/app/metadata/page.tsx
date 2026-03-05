@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { MetadataTable, MetadataRow } from "@/components/MetadataTable";
+import { MetadataRow } from "@/components/MetadataTable";
+import { MetadataClientWrapper } from "@/components/MetadataClientWrapper";
 
 export const metadata = {
     title: "Website Metadata | WebScope Pro",
@@ -48,7 +49,7 @@ export default async function MetadataPage() {
                 </p>
             </div>
 
-            <MetadataTable data={tableData} />
+            <MetadataClientWrapper initialData={tableData} />
         </div>
     );
 }

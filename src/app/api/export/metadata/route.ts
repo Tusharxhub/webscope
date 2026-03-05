@@ -43,7 +43,7 @@ export async function GET(req: Request) {
             metadataLogs,
             headers,
             (row) => [
-                row.url,
+                row.siteUrl,
                 row.pageUrl,
                 row.title,
                 row.metaDesc,
