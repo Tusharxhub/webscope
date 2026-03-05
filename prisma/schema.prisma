@@ -73,6 +73,10 @@ model PageMetadata {
   pageUrl       String
   title         String?
   metaDesc      String?
+  metaKeywords  String?
+  canonicalTag  String?
+  ogTitle       String?
+  ogDescription String?
   h1Count       Int
   h2Count       Int
   wordCount     Int

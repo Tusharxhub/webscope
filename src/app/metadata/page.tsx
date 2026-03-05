@@ -24,12 +24,17 @@ export default async function MetadataPage() {
     });
 
     const tableData: MetadataRow[] = metadataLogs.map((log: {
-        id: string; pageUrl: string; title: string | null; metaDesc: string | null; h1Count: number; h2Count: number; wordCount: number; responseTime: number; imageCount: number; scriptCount: number;
+        id: string; pageUrl: string; siteUrl: string; title: string | null; metaDesc: string | null; metaKeywords: string | null; canonicalTag: string | null; ogTitle: string | null; ogDescription: string | null; h1Count: number; h2Count: number; wordCount: number; responseTime: number; imageCount: number; scriptCount: number;
     }) => ({
         id: log.id,
         pageUrl: log.pageUrl,
+        siteUrl: log.siteUrl,
         title: log.title,
         metaDesc: log.metaDesc,
+        metaKeywords: log.metaKeywords,
+        canonicalTag: log.canonicalTag,
+        ogTitle: log.ogTitle,
+        ogDescription: log.ogDescription,
         h1Count: log.h1Count,
         h2Count: log.h2Count,
         wordCount: log.wordCount,

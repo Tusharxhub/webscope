@@ -21,9 +21,14 @@ export function MetadataClientWrapper({ initialData }: MetadataClientWrapperProp
             if (result.success && result.data) {
                 const mapped: MetadataRow[] = result.data.map((log: {
                     id: string;
+                    siteUrl: string;
                     pageUrl: string;
                     title: string | null;
                     metaDesc: string | null;
+                    metaKeywords: string | null;
+                    canonicalTag: string | null;
+                    ogTitle: string | null;
+                    ogDescription: string | null;
                     h1Count: number;
                     h2Count: number;
                     wordCount: number;
@@ -32,9 +37,14 @@ export function MetadataClientWrapper({ initialData }: MetadataClientWrapperProp
                     scriptCount: number;
                 }) => ({
                     id: log.id,
+                    siteUrl: log.siteUrl,
                     pageUrl: log.pageUrl,
                     title: log.title,
                     metaDesc: log.metaDesc,
+                    metaKeywords: log.metaKeywords,
+                    canonicalTag: log.canonicalTag,
+                    ogTitle: log.ogTitle,
+                    ogDescription: log.ogDescription,
                     h1Count: log.h1Count,
                     h2Count: log.h2Count,
                     wordCount: log.wordCount,
