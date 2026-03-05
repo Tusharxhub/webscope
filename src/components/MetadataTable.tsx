@@ -5,20 +5,14 @@ import {
     ChevronDownIcon,
     ChevronUpIcon,
     ChevronUpDownIcon,
-    MagnifyingGlassIcon,
-    ChevronRightIcon
+    MagnifyingGlassIcon
 } from "@heroicons/react/24/outline";
 
 export interface MetadataRow {
     id: string;
-    siteUrl: string;
     pageUrl: string;
     title: string | null;
     metaDesc: string | null;
-    metaKeywords: string | null;
-    canonicalTag: string | null;
-    ogTitle: string | null;
-    ogDescription: string | null;
     h1Count: number;
     h2Count: number;
     wordCount: number;
@@ -40,7 +34,6 @@ export function MetadataTable({ data }: MetadataTableProps) {
     const [sortField, setSortField] = useState<SortField>("pageUrl");
     const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
     const [currentPage, setCurrentPage] = useState(1);
-    const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
     const rowsPerPage = 10;
 
     const [isExportingCsv, setIsExportingCsv] = useState(false);
@@ -72,12 +65,8 @@ export function MetadataTable({ data }: MetadataTableProps) {
             .filter((row) => {
                 const matchesSearch =
                     row.pageUrl.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    row.siteUrl.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     (row.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-                    (row.metaDesc?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-                    (row.metaKeywords?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-                    (row.ogTitle?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-                    (row.ogDescription?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+                    (row.metaDesc?.toLowerCase() || "").includes(searchTerm.toLowerCase());
                 return matchesSearch;
             })
             .sort((a, b) => {
@@ -176,8 +165,6 @@ export function MetadataTable({ data }: MetadataTableProps) {
                 <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800/80 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                         <tr>
-                            <th className="px-3 py-3 w-10">Details</th>
-                            {renderSortableHeader("siteUrl", "Site URL")}
                             {renderSortableHeader("pageUrl", "Page URL")}
                             {renderSortableHeader("title", "Title")}
                             {renderSortableHeader("metaDesc", "Meta Description")}
@@ -186,91 +173,51 @@ export function MetadataTable({ data }: MetadataTableProps) {
                             {renderSortableHeader("wordCount", "Words")}
                             {renderSortableHeader("responseTime", "Response (ms)")}
                             {renderSortableHeader("imageCount", "Images")}
-                            {renderSortableHeader("scriptCount", "Scripts")}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
                         {paginatedData.length === 0 ? (
                             <tr className="bg-white dark:bg-gray-900">
-                                <td colSpan={11} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No pages found matching your search.
                                 </td>
                             </tr>
                         ) : (
                             paginatedData.map((row) => {
                                 const isMissingMeta = !row.metaDesc || row.metaDesc.trim() === "";
-                                const isExpanded = expandedRowId === row.id;
 
                                 return (
-                                    <React.Fragment key={row.id}>
-                                        <tr className="bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/50 transition-colors">
-                                            <td className="px-3 py-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setExpandedRowId(isExpanded ? null : row.id)}
-                                                    className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                    aria-label={isExpanded ? "Collapse row details" : "Expand row details"}
-                                                >
-                                                    {isExpanded ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
-                                                </button>
-                                            </td>
-                                            <td className="px-4 py-3 truncate max-w-[200px]" title={row.siteUrl}>
-                                                {row.siteUrl}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white truncate max-w-[220px]" title={row.pageUrl}>
-                                                <a href={row.pageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">
-                                                    {row.pageUrl}
-                                                </a>
-                                            </td>
-                                            <td className="px-4 py-3 truncate max-w-[220px]" title={row.title || ""}>
-                                                {row.title || "-"}
-                                            </td>
-                                            <td
-                                                className={`px-4 py-3 truncate max-w-[250px] ${isMissingMeta
-                                                    ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 font-medium"
-                                                    : ""
-                                                    }`}
-                                                title={row.metaDesc || "Missing meta description"}
-                                            >
-                                                {row.metaDesc || "Missing"}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">{row.h1Count}</td>
-                                            <td className="px-4 py-3 text-right">{row.h2Count}</td>
-                                            <td className="px-4 py-3 text-right">{row.wordCount}</td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className={row.responseTime > 1000 ? "text-yellow-600 dark:text-yellow-400" : ""}>
-                                                    {row.responseTime}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">{row.imageCount}</td>
-                                            <td className="px-4 py-3 text-right">{row.scriptCount}</td>
-                                        </tr>
-
-                                        {isExpanded && (
-                                            <tr className="bg-gray-50 dark:bg-gray-800/40">
-                                                <td colSpan={11} className="px-4 py-4">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                        <div className="rounded border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900">
-                                                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Meta Keywords</p>
-                                                            <p className="text-gray-800 dark:text-gray-100 break-words">{row.metaKeywords || "-"}</p>
-                                                        </div>
-                                                        <div className="rounded border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900">
-                                                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Canonical Tag</p>
-                                                            <p className="text-gray-800 dark:text-gray-100 break-words">{row.canonicalTag || "-"}</p>
-                                                        </div>
-                                                        <div className="rounded border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900">
-                                                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">OpenGraph Title</p>
-                                                            <p className="text-gray-800 dark:text-gray-100 break-words">{row.ogTitle || "-"}</p>
-                                                        </div>
-                                                        <div className="rounded border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900">
-                                                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">OpenGraph Description</p>
-                                                            <p className="text-gray-800 dark:text-gray-100 break-words">{row.ogDescription || "-"}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
+                                    <tr
+                                        key={row.id}
+                                        className="bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/50 transition-colors"
+                                    >
+                                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white truncate max-w-[200px]" title={row.pageUrl}>
+                                            <a href={row.pageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">
+                                                {row.pageUrl}
+                                            </a>
+                                        </td>
+                                        <td className="px-4 py-3 truncate max-w-[200px]" title={row.title || ""}>
+                                            {row.title || "-"}
+                                        </td>
+                                        <td
+                                            className={`px-4 py-3 truncate max-w-[250px] ${isMissingMeta
+                                                ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 font-medium"
+                                                : ""
+                                                }`}
+                                            title={row.metaDesc || "Missing meta description"}
+                                        >
+                                            {row.metaDesc || "⚠️ Missing"}
+                                        </td>
+                                        <td className="px-4 py-3 text-right">{row.h1Count}</td>
+                                        <td className="px-4 py-3 text-right">{row.h2Count}</td>
+                                        <td className="px-4 py-3 text-right">{row.wordCount}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            <span className={row.responseTime > 1000 ? "text-yellow-600 dark:text-yellow-400" : ""}>
+                                                {row.responseTime}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">{row.imageCount}</td>
+                                    </tr>
                                 );
                             })
                         )}

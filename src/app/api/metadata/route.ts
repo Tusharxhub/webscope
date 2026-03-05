@@ -9,9 +9,8 @@ import { urlSchema } from "@/lib/validators";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Rate limiter (1 analysis per 10 seconds per user)
+// Rate limiter (1 analysis per 30 seconds per user)
 const lastAnalysis = new Map<string, number>();
-const ANALYSIS_COOLDOWN_MS = 10000;
 
 export async function POST(req: NextRequest) {
     try {
@@ -23,24 +22,8 @@ export async function POST(req: NextRequest) {
         // Rate limiting
         const now = Date.now();
         const last = lastAnalysis.get(session.user.id) || 0;
-        if (now - last < ANALYSIS_COOLDOWN_MS) {
-            const remainingMs = ANALYSIS_COOLDOWN_MS - (now - last);
-            const retryAfterSeconds = Math.ceil(remainingMs / 1000);
-
-            return NextResponse.json(
-                {
-                    success: false,
-                    errorType: "VALIDATION",
-                    message: `Please wait ${retryAfterSeconds}s before starting a new analysis.`,
-                    retryAfterSeconds,
-                },
-                {
-                    status: 429,
-                    headers: {
-                        "Retry-After": String(retryAfterSeconds),
-                    },
-                }
-            );
+        if (now - last < 30000) {
+            return jsonApiError("VALIDATION", "Please wait 30 seconds between analyses", 429);
         }
         lastAnalysis.set(session.user.id, now);
 
@@ -76,10 +59,6 @@ export async function POST(req: NextRequest) {
                         pageUrl: page.url,
                         title: page.title,
                         metaDesc: page.metaDescription,
-                        metaKeywords: page.metaKeywords,
-                        canonicalTag: page.canonicalTag,
-                        ogTitle: page.ogTitle,
-                        ogDescription: page.ogDescription,
                         h1Count: page.h1Count,
                         h2Count: page.h2Count,
                         wordCount: page.wordCount,
@@ -100,10 +79,6 @@ export async function POST(req: NextRequest) {
                     url: page.url,
                     title: page.title,
                     metaDescription: page.metaDescription,
-                    metaKeywords: page.metaKeywords,
-                    canonicalTag: page.canonicalTag,
-                    ogTitle: page.ogTitle,
-                    ogDescription: page.ogDescription,
                     h1Count: page.h1Count,
                     h2Count: page.h2Count,
                     wordCount: page.wordCount,

@@ -160,5 +160,76 @@ export interface ComparisonHistoryEntry {
   createdAt: string;
 }
 
+export interface PageAnalysis {
+  pageUrl: string;
+  title: string | null;
+  metaDescription: string | null;
+  metaKeywords: string | null;
+  canonicalUrl: string | null;
+  robotsMeta: string | null;
+  h1Count: number;
+  h2Count: number;
+  h3Count: number;
+  h4Count: number;
+  h5Count: number;
+  h6Count: number;
+  wordCount: number;
+  paragraphCount: number;
+  headingCount: number;
+  textLength: number;
+  contentSizeKb: number;
+  imageCount: number;
+  imagesWithoutAlt: number;
+  videoCount: number;
+  iframeCount: number;
+  scriptCount: number;
+  inlineScripts: number;
+  externalScripts: number;
+  internalLinks: number;
+  externalLinks: number;
+  brokenLinks: number;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImage: string | null;
+  twitterTitle: string | null;
+  twitterDescription: string | null;
+  responseTime: number;
+  htmlSize: number;
+  requestCount: number;
+  navElements: number;
+  buttons: number;
+  forms: number;
+  inputs: number;
+  tables: number;
+  lists: number;
+  sections: number;
+  divCount: number;
+}
+
+export interface PageAnalysisRecord {
+  id: string;
+  siteUrl: string;
+  pageUrl: string;
+  title: string | null;
+  metaDesc: string | null;
+  metaKeywords: string | null;
+  h1: number;
+  h2: number;
+  h3: number;
+  wordCount: number;
+  paragraphCount: number;
+  imageCount: number;
+  imagesWithoutAlt: number;
+  scriptCount: number;
+  internalLinks: number;
+  externalLinks: number;
+  buttons: number;
+  forms: number;
+  inputs: number;
+  responseTime: number;
+  htmlSize: number;
+  createdAt: string;
+}
+
 export * from "./analysis";
 export * from "./api";

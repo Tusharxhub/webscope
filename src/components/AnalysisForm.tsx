@@ -35,12 +35,7 @@ export function AnalysisForm({ onAnalysisComplete }: AnalysisFormProps) {
                 setUrl("");
                 onAnalysisComplete();
             } else {
-                if (response.status === 429) {
-                    const waitTime = data.retryAfterSeconds ?? 10;
-                    setError(`Rate limit active. Please wait ${waitTime}s and try again.`);
-                } else {
-                    setError(data.message || "Failed to analyze website");
-                }
+                setError(data.message || "Failed to analyze website");
             }
         } catch {
             setError("Network error. Please try again.");
@@ -108,7 +103,7 @@ export function AnalysisForm({ onAnalysisComplete }: AnalysisFormProps) {
                     <li>Crawls internal links only (same domain)</li>
                     <li>Maximum 10 pages per analysis</li>
                     <li>5 second timeout per page</li>
-                    <li>Rate limited to one analysis per 10 seconds</li>
+                    <li>Rate limited to one analysis per 30 seconds</li>
                 </ul>
             </div>
         </div>

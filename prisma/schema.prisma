@@ -73,10 +73,6 @@ model PageMetadata {
   pageUrl       String
   title         String?
   metaDesc      String?
-  metaKeywords  String?
-  canonicalTag  String?
-  ogTitle       String?
-  ogDescription String?
   h1Count       Int
   h2Count       Int
   wordCount     Int
@@ -84,6 +80,33 @@ model PageMetadata {
   scriptCount   Int
   responseTime  Int
   createdAt     DateTime @default(now())
+
+  @@index([siteUrl])
+}
+
+model PageAnalysis {
+  id               String   @id @default(uuid())
+  siteUrl          String
+  pageUrl          String
+  title            String?
+  metaDesc         String?
+  metaKeywords     String?
+  h1               Int
+  h2               Int
+  h3               Int
+  wordCount        Int
+  paragraphCount   Int
+  imageCount       Int
+  imagesWithoutAlt Int
+  scriptCount      Int
+  internalLinks    Int
+  externalLinks    Int
+  buttons          Int
+  forms            Int
+  inputs           Int
+  responseTime     Int
+  htmlSize         Int
+  createdAt        DateTime @default(now())
 
   @@index([siteUrl])
 }

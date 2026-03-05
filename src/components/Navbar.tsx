@@ -47,6 +47,12 @@ export default function Navbar() {
               >
                 Metadata
               </Link>
+              <Link
+                href="/page-analysis"
+                className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Page Analysis
+              </Link>
               <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
               <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono truncate max-w-[120px]">
                 {session.user?.name || session.user?.email}
@@ -126,6 +132,13 @@ export default function Navbar() {
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-indigo-500 transition-colors py-1"
                 >
                   Metadata
+                </Link>
+                <Link
+                  href="/page-analysis"
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-indigo-500 transition-colors py-1"
+                >
+                  Page Analysis
                 </Link>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
