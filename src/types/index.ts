@@ -72,6 +72,9 @@ export interface ScrapedDataEntry {
   metaLength: number | null;
   titleLength: number | null;
   missingAltCount: number | null;
+  contentSize: number | null;
+  scriptCount: number | null;
+  imageCount: number | null;
   createdAt: string;
 }
 

@@ -49,6 +49,9 @@ model ScrapedData {
   metaLength      Int?
   titleLength     Int?
   missingAltCount Int?
+  contentSize     Int?
+  scriptCount     Int?
+  imageCount      Int?
   createdAt       DateTime   @default(now())
 }
 
@@ -62,4 +65,21 @@ model Comparison {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model PageMetadata {
+  id            String   @id @default(uuid())
+  url           String
+  pageUrl       String
+  title         String?
+  metaDesc      String?
+  h1Count       Int
+  h2Count       Int
+  wordCount     Int
+  imageCount    Int
+  scriptCount   Int
+  responseTime  Int
+  createdAt     DateTime @default(now())
+
+  @@index([url])
 }

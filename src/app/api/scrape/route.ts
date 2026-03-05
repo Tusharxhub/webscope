@@ -79,8 +79,8 @@ export async function POST(
         analysis.errorType === "DISALLOWED_BY_ROBOTS"
           ? 403
           : analysis.errorType === "TIMEOUT" || analysis.errorType === "NETWORK"
-          ? 502
-          : 500;
+            ? 502
+            : 500;
 
       return NextResponse.json(
         {
@@ -129,6 +129,9 @@ export async function POST(
       metaLength: number | null;
       titleLength: number | null;
       missingAltCount: number | null;
+      contentSize: number | null;
+      scriptCount: number | null;
+      imageCount: number | null;
       createdAt: Date;
     };
     try {
@@ -137,6 +140,9 @@ export async function POST(
         headings: scraped.headings,
         meta: scraped.meta,
         bodyText,
+        contentSize: scraped.contentSize,
+        scriptCount: scraped.scriptCount,
+        imageCount: scraped.imageCount,
       };
 
       try {
@@ -193,6 +199,9 @@ export async function POST(
           metaLength: fullScrapedData.metaLength ?? null,
           titleLength: fullScrapedData.titleLength ?? null,
           missingAltCount: fullScrapedData.missingAltCount ?? null,
+          contentSize: fullScrapedData.contentSize ?? null,
+          scriptCount: fullScrapedData.scriptCount ?? null,
+          imageCount: fullScrapedData.imageCount ?? null,
         };
       } catch (createError) {
         const createInfo = classifyPrismaError(createError);
@@ -255,6 +264,9 @@ export async function POST(
             metaLength: null,
             titleLength: null,
             missingAltCount: null,
+            contentSize: null,
+            scriptCount: null,
+            imageCount: null,
           };
         } else {
           throw createError;
