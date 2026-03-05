@@ -14,7 +14,8 @@ import SkeletonLoader from "@/components/SkeletonLoader";
 import SeoScoreBadge from "@/components/SeoScoreBadge";
 import SeoChecklist from "@/components/SeoChecklist";
 import SeoMetricsGrid from "@/components/SeoMetricsGrid";
-import { ScrapeResponse, RequestLogEntry, StatsData } from "@/types";
+import ScanTimeline from "@/components/ScanTimeline";
+import { ScrapeResponse, RequestLogEntry, StatsData, GroupedScans } from "@/types";
 
 function getAnimalEmoji(animal?: string | null): string {
   if (!animal) return "🧠";
@@ -49,6 +50,10 @@ export default function DashboardPage() {
 
   const [selectedLog, setSelectedLog] = useState<RequestLogEntry | null>(null);
 
+  // Scans state
+  const [scans, setScans] = useState<GroupedScans[]>([]);
+  const [scansLoading, setScansLoading] = useState(true);
+
   // Fetch logs
   const fetchLogs = useCallback(async (p: number) => {
     try {
@@ -74,8 +79,20 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Fetch scans
+  const fetchScans = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/scans");
+      const data = await res.json();
+      if (data.success) setScans(data.data);
+    } catch { /* silent */ } finally {
+      setScansLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchLogs(page); }, [fetchLogs, page]);
   useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { fetchScans(); }, [fetchScans]);
 
   // Poll for real-time updates (Vercel doesn't support WebSockets)
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -83,11 +100,12 @@ export default function DashboardPage() {
     pollRef.current = setInterval(() => {
       fetchLogs(page);
       fetchStats();
+      fetchScans();
     }, 5000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchLogs, fetchStats, page]);
+  }, [fetchLogs, fetchStats, fetchScans, page]);
 
   const handleScrape = async () => {
     setError("");
@@ -109,11 +127,12 @@ export default function DashboardPage() {
         setLastResult(data);
         fetchLogs(1);
         fetchStats();
+        fetchScans();
         setPage(1);
       } else {
         setLastResult(data); // keep for robots warning UI
         setError(data.error || "Something went wrong");
-        if (data.data) { fetchLogs(1); fetchStats(); setPage(1); }
+        if (data.data) { fetchLogs(1); fetchStats(); fetchScans(); setPage(1); }
       }
     } catch {
       setError("Network error. Please try again.");
@@ -285,6 +304,11 @@ export default function DashboardPage() {
             </div>
           </Card>
         )}
+
+        {/* Scan History Timeline */}
+        <div className="mb-6">
+          <ScanTimeline groupedScans={scans} loading={scansLoading} />
+        </div>
 
         {/* Stats */}
         <div className="mb-6">

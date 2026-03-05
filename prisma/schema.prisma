@@ -7,13 +7,80 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  name        String?
-  email       String       @unique
-  password    String
-  logs        RequestLog[]
-  comparisons Comparison[]
-  createdAt   DateTime     @default(now())
+  id           String        @id @default(uuid())
+  name         String?
+  email        String        @unique
+  password     String
+  scrapedData  ScrapedData[]
+  pageMetadata PageMetadata[]
+  monitors     Monitor[]
+  alerts       Alert[]
+  scanHistory  ScanHistory[]
+  logs         RequestLog[]
+  comparisons  Comparison[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([createdAt])
+}
+
+model ScanHistory {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url              String
+  normalizedUrl    String
+  statusCode       Int
+  seoScore         Int
+  performanceScore Int
+  responseTime     Int
+  animalSpirit     String?
+  cacheKey         String?        @unique
+  createdAt        DateTime       @default(now())
+  scrapedData      ScrapedData[]
+  pageMetadata     PageMetadata[]
+
+  @@index([userId, createdAt])
+  @@index([normalizedUrl, createdAt])
+}
+
+model Monitor {
+  id                    String    @id @default(uuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url                   String
+  normalizedUrl         String
+  seoThreshold          Int       @default(70)
+  responseTimeThreshold Int       @default(1500)
+  checkIntervalMinutes  Int       @default(30)
+  isActive              Boolean   @default(true)
+  lastCheckedAt         DateTime?
+  lastSeoScore          Int?
+  lastResponseTime      Int?
+  alerts                Alert[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId, isActive])
+  @@index([normalizedUrl])
+}
+
+model Alert {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitorId        String?
+  monitor          Monitor?  @relation(fields: [monitorId], references: [id], onDelete: SetNull)
+  url              String
+  type             String
+  severity         String    @default("medium")
+  message          String
+  resolved         Boolean   @default(false)
+  resolvedAt       DateTime?
+  triggeredAt      DateTime  @default(now())
+
+  @@index([userId, triggeredAt])
+  @@index([monitorId, resolved])
 }
 
 model RequestLog {
@@ -33,26 +100,36 @@ model RequestLog {
 }
 
 model ScrapedData {
-  id              String     @id @default(uuid())
-  requestId       String
-  request         RequestLog @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  title           String
-  headings        String[]
-  meta            String?
-  bodyText        String?
-  animalSpirit    String?
-  animalType      String?
-  seoScore        Int?
-  wordCount       Int?
-  h1Count         Int?
-  h2Count         Int?
-  metaLength      Int?
-  titleLength     Int?
-  missingAltCount Int?
-  contentSize     Int?
-  scriptCount     Int?
-  imageCount      Int?
-  createdAt       DateTime   @default(now())
+  id                String      @id @default(uuid())
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  requestId         String?
+  request           RequestLog? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  scanHistoryId     String?
+  scanHistory       ScanHistory? @relation(fields: [scanHistoryId], references: [id], onDelete: Cascade)
+  url               String?
+  title             String
+  headings          String[]
+  meta              String?
+  bodyText          String?
+  animalSpirit      String?
+  animalType        String?
+  seoScore          Int?
+  performanceScore  Int?
+  responseTime      Int?
+  wordCount         Int?
+  h1Count           Int?
+  h2Count           Int?
+  metaLength        Int?
+  titleLength       Int?
+  missingAltCount   Int?
+  contentSize       Int?
+  scriptCount       Int?
+  imageCount        Int?
+  createdAt         DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([scanHistoryId])
 }
 
 model Comparison {
@@ -68,20 +145,29 @@ model Comparison {
 }
 
 model PageMetadata {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  scanHistoryId String?
+  scanHistory   ScanHistory? @relation(fields: [scanHistoryId], references: [id], onDelete: Cascade)
   siteUrl       String
   pageUrl       String
   title         String?
   metaDesc      String?
+  metaKeywords  String?
+  canonicalTag  String?
   h1Count       Int
   h2Count       Int
   wordCount     Int
   imageCount    Int
   scriptCount   Int
+  internalLinks Int       @default(0)
+  externalLinks Int       @default(0)
   responseTime  Int
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
-  @@index([siteUrl])
+  @@index([siteUrl, createdAt])
+  @@index([userId, createdAt])
 }
 
 model PageAnalysis {

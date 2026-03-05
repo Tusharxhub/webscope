@@ -231,5 +231,38 @@ export interface PageAnalysisRecord {
   createdAt: string;
 }
 
+// ── Scan History ──
+
+export interface ScanPage {
+  id: string;
+  pageUrl: string;
+  title: string | null;
+  metaDesc: string | null;
+  h1Count: number;
+  h2Count: number;
+  wordCount: number;
+  imageCount: number;
+  scriptCount: number;
+  internalLinks: number;
+  externalLinks: number;
+  responseTime: number;
+}
+
+export interface ScanWithPages {
+  id: string;
+  url: string;
+  seoScore: number;
+  responseTime: number;
+  animalSpirit: string | null;
+  createdAt: string;
+  pageCount: number;
+  pages: ScanPage[];
+}
+
+export interface GroupedScans {
+  date: string;
+  scans: ScanWithPages[];
+}
+
 export * from "./analysis";
 export * from "./api";

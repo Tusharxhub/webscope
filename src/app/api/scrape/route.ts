@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 import { analyzeWebsite } from "@/lib/analyzeWebsite";
+import { crawlWebsite } from "@/lib/pageCrawler";
 import { ScrapeResponse } from "@/types";
 import { classifyPrismaError, jsonApiError } from "@/lib/errorHandler";
 
@@ -189,7 +190,12 @@ export async function POST(
         const fullScrapedData = txResult.fullScrapedData;
 
         scrapedData = {
-          ...fullScrapedData,
+          id: fullScrapedData.id,
+          requestId: fullScrapedData.requestId!,
+          title: fullScrapedData.title,
+          headings: fullScrapedData.headings,
+          meta: fullScrapedData.meta,
+          bodyText: fullScrapedData.bodyText,
           animalType: fullScrapedData.animalType ?? null,
           animalSpirit: fullScrapedData.animalSpirit ?? null,
           seoScore: fullScrapedData.seoScore ?? null,
@@ -202,6 +208,7 @@ export async function POST(
           contentSize: fullScrapedData.contentSize ?? null,
           scriptCount: fullScrapedData.scriptCount ?? null,
           imageCount: fullScrapedData.imageCount ?? null,
+          createdAt: fullScrapedData.createdAt,
         };
       } catch (createError) {
         const createInfo = classifyPrismaError(createError);
@@ -254,7 +261,12 @@ export async function POST(
           const legacyScrapedData = legacyTx.legacyScrapedData;
 
           scrapedData = {
-            ...legacyScrapedData,
+            id: legacyScrapedData.id,
+            requestId: legacyScrapedData.requestId!,
+            title: legacyScrapedData.title,
+            headings: legacyScrapedData.headings,
+            meta: legacyScrapedData.meta,
+            bodyText: legacyScrapedData.bodyText,
             animalType: null,
             animalSpirit: null,
             seoScore: null,
@@ -267,6 +279,7 @@ export async function POST(
             contentSize: null,
             scriptCount: null,
             imageCount: null,
+            createdAt: legacyScrapedData.createdAt,
           };
         } else {
           throw createError;
@@ -276,6 +289,58 @@ export async function POST(
       console.error("SCRAPE DATABASE ERROR:", error);
       const prismaError = classifyPrismaError(error);
       return jsonApiError(prismaError.type, prismaError.message, prismaError.status);
+    }
+
+    // ── Create ScanHistory and PageMetadata ──
+    try {
+      // Normalize URL for consistent storage
+      const normalizedUrl = new URL(url).origin;
+
+      // Create scan history record
+      const scanHistory = await prisma.scanHistory.create({
+        data: {
+          userId,
+          url,
+          normalizedUrl,
+          statusCode: scraped.statusCode || 200,
+          seoScore: seoAnalysis.seoScore,
+          performanceScore: analysis.performance?.totalTime || 0,
+          responseTime: scraped.responseTime,
+          animalSpirit: animalSpiritResult.animal,
+        },
+      });
+
+      // Crawl website to get page metadata (run in background, don't wait)
+      crawlWebsite(url)
+        .then(async (pages) => {
+          if (pages.length > 0) {
+            await prisma.pageMetadata.createMany({
+              data: pages.map((page) => ({
+                userId,
+                scanHistoryId: scanHistory.id,
+                siteUrl: normalizedUrl,
+                pageUrl: page.pageUrl,
+                title: page.title,
+                metaDesc: page.metaDescription,
+                metaKeywords: page.metaKeywords,
+                h1Count: page.h1Count,
+                h2Count: page.h2Count,
+                wordCount: page.wordCount,
+                imageCount: page.imageCount,
+                scriptCount: page.scriptCount,
+                internalLinks: page.internalLinks,
+                externalLinks: page.externalLinks,
+                responseTime: page.responseTime,
+              })),
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to save page metadata:", err);
+        });
+    } catch (scanError) {
+      // Don't fail the entire request if scan history fails
+      console.error("Failed to create scan history:", scanError);
     }
 
     return NextResponse.json({
