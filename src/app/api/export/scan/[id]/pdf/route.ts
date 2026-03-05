@@ -107,13 +107,16 @@ export async function GET(
         <tr>
           <th>Page URL</th>
           <th>Title</th>
-          <th>H1</th>
-          <th>H2</th>
+          <th>H1-H6</th>
           <th>Words</th>
+          <th>Paras</th>
           <th>Images</th>
+          <th>Missing Alt</th>
+          <th>Buttons</th>
+          <th>Forms</th>
           <th>Scripts</th>
-          <th>Int. Links</th>
-          <th>Ext. Links</th>
+          <th>Links</th>
+          <th>Size (KB)</th>
           <th>Time (ms)</th>
         </tr>
       </thead>
@@ -124,13 +127,16 @@ export async function GET(
           <tr>
             <td class="url-cell" title="${page.pageUrl}">${page.pageUrl}</td>
             <td>${page.title || "No title"}</td>
-            <td>${page.h1Count}</td>
-            <td>${page.h2Count}</td>
+            <td>${page.h1Count}/${page.h2Count}/${page.h3Count}/${page.h4Count}/${page.h5Count}/${page.h6Count}</td>
             <td>${page.wordCount.toLocaleString()}</td>
+            <td>${page.paragraphCount}</td>
             <td>${page.imageCount}</td>
+            <td>${page.imagesWithoutAlt}</td>
+            <td>${page.buttonCount}</td>
+            <td>${page.formCount}</td>
             <td>${page.scriptCount}</td>
-            <td>${page.internalLinks}</td>
-            <td>${page.externalLinks}</td>
+            <td>${page.internalLinks + page.externalLinks}</td>
+            <td>${(page.htmlSize / 1024).toFixed(1)}</td>
             <td>${page.responseTime}</td>
           </tr>
         `

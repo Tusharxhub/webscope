@@ -238,14 +238,49 @@ export interface ScanPage {
   pageUrl: string;
   title: string | null;
   metaDesc: string | null;
+  metaKeywords: string | null;
+  canonicalTag: string | null;
+  robotsMeta: string | null;
+  // Headings
   h1Count: number;
   h2Count: number;
+  h3Count: number;
+  h4Count: number;
+  h5Count: number;
+  h6Count: number;
+  headingCount: number;
+  // Content
   wordCount: number;
+  paragraphCount: number;
+  sectionCount: number;
+  divCount: number;
+  textLength: number;
+  contentSizeKb: number;
+  // Media
   imageCount: number;
-  scriptCount: number;
+  imagesWithoutAlt: number;
+  videoCount: number;
+  iframeCount: number;
+  // Interactive Elements
+  buttonCount: number;
+  formCount: number;
+  inputCount: number;
+  selectCount: number;
+  textareaCount: number;
+  navElements: number;
+  tableCount: number;
+  listCount: number;
+  // Links
   internalLinks: number;
   externalLinks: number;
+  brokenLinks: number;
+  // Scripts
+  scriptCount: number;
+  inlineScripts: number;
+  externalScripts: number;
+  // Performance
   responseTime: number;
+  htmlSize: number;
 }
 
 export interface ScanWithPages {

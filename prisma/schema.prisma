@@ -145,29 +145,64 @@ model Comparison {
 }
 
 model PageMetadata {
-  id            String      @id @default(uuid())
-  userId        String?
-  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  scanHistoryId String?
-  scanHistory   ScanHistory? @relation(fields: [scanHistoryId], references: [id], onDelete: Cascade)
-  siteUrl       String
-  pageUrl       String
-  title         String?
-  metaDesc      String?
-  metaKeywords  String?
-  canonicalTag  String?
-  h1Count       Int
-  h2Count       Int
-  wordCount     Int
-  imageCount    Int
-  scriptCount   Int
-  internalLinks Int       @default(0)
-  externalLinks Int       @default(0)
-  responseTime  Int
-  createdAt     DateTime  @default(now())
+  id               String       @id @default(uuid())
+  userId           String?
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  scanHistoryId    String?
+  scanHistory      ScanHistory? @relation(fields: [scanHistoryId], references: [id], onDelete: Cascade)
+  siteUrl          String
+  pageUrl          String
+  title            String?
+  metaDesc         String?
+  metaKeywords     String?
+  canonicalTag     String?
+  robotsMeta       String?
+  // Headings
+  h1Count          Int
+  h2Count          Int
+  h3Count          Int          @default(0)
+  h4Count          Int          @default(0)
+  h5Count          Int          @default(0)
+  h6Count          Int          @default(0)
+  headingCount     Int          @default(0)
+  // Content
+  wordCount        Int
+  paragraphCount   Int          @default(0)
+  sectionCount     Int          @default(0)
+  divCount         Int          @default(0)
+  textLength       Int          @default(0)
+  contentSizeKb    Float        @default(0)
+  // Media
+  imageCount       Int
+  imagesWithoutAlt Int          @default(0)
+  videoCount       Int          @default(0)
+  iframeCount      Int          @default(0)
+  // Interactive Elements
+  buttonCount      Int          @default(0)
+  formCount        Int          @default(0)
+  inputCount       Int          @default(0)
+  selectCount      Int          @default(0)
+  textareaCount    Int          @default(0)
+  navElements      Int          @default(0)
+  tableCount       Int          @default(0)
+  listCount        Int          @default(0)
+  // Links
+  internalLinks    Int          @default(0)
+  externalLinks    Int          @default(0)
+  brokenLinks      Int          @default(0)
+  // Scripts
+  scriptCount      Int
+  inlineScripts    Int          @default(0)
+  externalScripts  Int          @default(0)
+  // Performance
+  responseTime     Int
+  htmlSize         Int          @default(0)
+  // Timestamps
+  createdAt        DateTime     @default(now())
 
   @@index([siteUrl, createdAt])
   @@index([userId, createdAt])
+  @@index([scanHistoryId])
 }
 
 model PageAnalysis {

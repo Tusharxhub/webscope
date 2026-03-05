@@ -323,14 +323,48 @@ export async function POST(
                 title: page.title,
                 metaDesc: page.metaDescription,
                 metaKeywords: page.metaKeywords,
+                canonicalTag: page.canonicalUrl,
+                robotsMeta: page.robotsMeta,
+                // Headings
                 h1Count: page.h1Count,
                 h2Count: page.h2Count,
+                h3Count: page.h3Count,
+                h4Count: page.h4Count,
+                h5Count: page.h5Count,
+                h6Count: page.h6Count,
+                headingCount: page.headingCount,
+                // Content
                 wordCount: page.wordCount,
+                paragraphCount: page.paragraphCount,
+                sectionCount: page.sections,
+                divCount: page.divCount,
+                textLength: page.textLength,
+                contentSizeKb: page.contentSizeKb,
+                // Media
                 imageCount: page.imageCount,
-                scriptCount: page.scriptCount,
+                imagesWithoutAlt: page.imagesWithoutAlt,
+                videoCount: page.videoCount,
+                iframeCount: page.iframeCount,
+                // Interactive Elements
+                buttonCount: page.buttons,
+                formCount: page.forms,
+                inputCount: page.inputs,
+                selectCount: 0, // Not in PageAnalysis yet
+                textareaCount: 0, // Not in PageAnalysis yet
+                navElements: page.navElements,
+                tableCount: page.tables,
+                listCount: page.lists,
+                // Links
                 internalLinks: page.internalLinks,
                 externalLinks: page.externalLinks,
+                brokenLinks: page.brokenLinks,
+                // Scripts
+                scriptCount: page.scriptCount,
+                inlineScripts: page.inlineScripts,
+                externalScripts: page.externalScripts,
+                // Performance
                 responseTime: page.responseTime,
+                htmlSize: page.htmlSize,
               })),
             });
           }

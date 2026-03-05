@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ScanWithPages } from "@/types";
 import Card from "./Card";
 import Button from "./Button";
+import PageUIDetails from "./PageUIDetails";
 
 function getAnimalEmoji(animal?: string | null): string {
   if (!animal) return "🧠";
@@ -104,6 +105,18 @@ export default function ScanCard({ scan }: ScanCardProps) {
         <Button
           size="sm"
           variant="secondary"
+          onClick={() => window.open(`/api/export/scan/${scan.id}/json`, "_blank")}
+          className="text-xs"
+        >
+          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          JSON
+        </Button>
+
+        <Button
+          size="sm"
+          variant="secondary"
           onClick={() => window.open(`/api/export/scan/${scan.id}/csv`, "_blank")}
           className="text-xs"
         >
@@ -129,108 +142,82 @@ export default function ScanCard({ scan }: ScanCardProps) {
       {/* Expandable page list */}
       {expanded && scan.pages.length > 0 && (
         <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 animate-fade-in">
-          <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-3 uppercase tracking-widest">
-            Pages Analyzed
+          <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-3 uppercase tracking-widest flex items-center justify-between">
+            <span>Page UI Structure Analysis</span>
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md font-mono border border-zinc-200 dark:border-zinc-700">
+              {scan.pages.length} page{scan.pages.length !== 1 ? "s" : ""}
+            </span>
           </h4>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-700">
-                  <th className="text-left py-2 px-2 text-zinc-500 dark:text-zinc-500 font-mono font-medium">
-                    Page URL
-                  </th>
-                  <th className="text-left py-2 px-2 text-zinc-500 dark:text-zinc-500 font-mono font-medium">
-                    Title
-                  </th>
-                  <th className="text-center py-2 px-2 text-zinc-500 dark:text-zinc-500 font-mono font-medium">
-                    H1
-                  </th>
-                  <th className="text-center py-2 px-2 text-zinc-500 dark:text-zinc-500 font-mono font-medium">
-                    H2
-                  </th>
-                  <th className="text-right py-2 px-2 text-zinc-500 dark:text-zinc-500 font-mono font-medium">
-                    Words
-                  </th>
-                  <th className="text-right py-2 px-2 text-zinc-500 dark:text-zinc-500 font-mono font-medium">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {scan.pages.map((page) => (
-                  <tr
-                    key={page.id}
-                    className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <td className="py-2 px-2 text-zinc-700 dark:text-zinc-300 font-mono truncate max-w-xs">
-                      <a
-                        href={page.pageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-indigo-600 dark:hover:text-indigo-400"
-                      >
-                        {page.pageUrl}
-                      </a>
-                    </td>
-                    <td className="py-2 px-2 text-zinc-600 dark:text-zinc-400 truncate max-w-xs">
-                      {page.title || "No title"}
-                    </td>
-                    <td className="py-2 px-2 text-zinc-600 dark:text-zinc-400 text-center">
-                      {page.h1Count}
-                    </td>
-                    <td className="py-2 px-2 text-zinc-600 dark:text-zinc-400 text-center">
-                      {page.h2Count}
-                    </td>
-                    <td className="py-2 px-2 text-zinc-600 dark:text-zinc-400 text-right">
-                      {page.wordCount.toLocaleString()}
-                    </td>
-                    <td className="py-2 px-2 text-zinc-600 dark:text-zinc-400 text-right">
-                      {page.responseTime}ms
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-2 py-2 px-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 rounded-t-md">
+            <div className="col-span-4 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+              Page URL
+            </div>
+            <div className="col-span-3 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+              Title
+            </div>
+            <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+              H1
+            </div>
+            <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+              Images
+            </div>
+            <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+              Buttons
+            </div>
+            <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+              Scripts
+            </div>
+            <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-right">
+              Time
+            </div>
           </div>
 
-          {/* Additional metrics */}
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {scan.pages.length > 0 && (
-              <>
-                <div className="text-center">
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest">
-                    Avg. Images
-                  </p>
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mt-0.5">
-                    {Math.round(scan.pages.reduce((sum, p) => sum + p.imageCount, 0) / scan.pages.length)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest">
-                    Avg. Scripts
-                  </p>
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mt-0.5">
-                    {Math.round(scan.pages.reduce((sum, p) => sum + p.scriptCount, 0) / scan.pages.length)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest">
-                    Int. Links
-                  </p>
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mt-0.5">
-                    {scan.pages.reduce((sum, p) => sum + p.internalLinks, 0)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest">
-                    Ext. Links
-                  </p>
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mt-0.5">
-                    {scan.pages.reduce((sum, p) => sum + p.externalLinks, 0)}
-                  </p>
-                </div>
-              </>
-            )}
+          {/* Page Rows with Expandable Details */}
+          <div className="border border-t-0 border-zinc-200 dark:border-zinc-700 rounded-b-md overflow-hidden">
+            {scan.pages.map((page) => (
+              <PageUIDetails key={page.id} page={page} />
+            ))}
+          </div>
+
+          {/* Summary Stats */}
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                Avg. Words
+              </p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {Math.round(scan.pages.reduce((sum, p) => sum + p.wordCount, 0) / scan.pages.length).toLocaleString()}
+              </p>
+            </div>
+
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                Total Forms
+              </p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {scan.pages.reduce((sum, p) => sum + p.formCount, 0)}
+              </p>
+            </div>
+
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                Total Scripts
+              </p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {scan.pages.reduce((sum, p) => sum + p.scriptCount, 0)}
+              </p>
+            </div>
+
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                Avg. Load Time
+              </p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {Math.round(scan.pages.reduce((sum, p) => sum + p.responseTime, 0) / scan.pages.length)}ms
+              </p>
+            </div>
           </div>
         </div>
       )}
