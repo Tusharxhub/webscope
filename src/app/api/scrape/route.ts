@@ -5,7 +5,7 @@ import { urlSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 import { analyzeWebsite } from "@/lib/analyzeWebsite";
 import { crawlWebsite } from "@/lib/pageCrawler";
-import { ScrapeResponse } from "@/types";
+import type { ScanPage, ScrapeResponse } from "@/types";
 import { classifyPrismaError, jsonApiError } from "@/lib/errorHandler";
 
 // Simple in-memory rate limiter per user
@@ -292,6 +292,7 @@ export async function POST(
     }
 
     // ── Create ScanHistory and PageMetadata ──
+    let pageUiData: ScanPage[] = [];
     try {
       // Normalize URL for consistent storage
       const normalizedUrl = new URL(url).origin;
@@ -310,68 +311,111 @@ export async function POST(
         },
       });
 
-      // Crawl website to get page metadata (run in background, don't wait)
-      crawlWebsite(url)
-        .then(async (pages) => {
-          if (pages.length > 0) {
-            await prisma.pageMetadata.createMany({
-              data: pages.map((page) => ({
-                userId,
-                scanHistoryId: scanHistory.id,
-                siteUrl: normalizedUrl,
-                pageUrl: page.pageUrl,
-                title: page.title,
-                metaDesc: page.metaDescription,
-                metaKeywords: page.metaKeywords,
-                canonicalTag: page.canonicalUrl,
-                robotsMeta: page.robotsMeta,
-                // Headings
-                h1Count: page.h1Count,
-                h2Count: page.h2Count,
-                h3Count: page.h3Count,
-                h4Count: page.h4Count,
-                h5Count: page.h5Count,
-                h6Count: page.h6Count,
-                headingCount: page.headingCount,
-                // Content
-                wordCount: page.wordCount,
-                paragraphCount: page.paragraphCount,
-                sectionCount: page.sections,
-                divCount: page.divCount,
-                textLength: page.textLength,
-                contentSizeKb: page.contentSizeKb,
-                // Media
-                imageCount: page.imageCount,
-                imagesWithoutAlt: page.imagesWithoutAlt,
-                videoCount: page.videoCount,
-                iframeCount: page.iframeCount,
-                // Interactive Elements
-                buttonCount: page.buttons,
-                formCount: page.forms,
-                inputCount: page.inputs,
-                selectCount: 0, // Not in PageAnalysis yet
-                textareaCount: 0, // Not in PageAnalysis yet
-                navElements: page.navElements,
-                tableCount: page.tables,
-                listCount: page.lists,
-                // Links
-                internalLinks: page.internalLinks,
-                externalLinks: page.externalLinks,
-                brokenLinks: page.brokenLinks,
-                // Scripts
-                scriptCount: page.scriptCount,
-                inlineScripts: page.inlineScripts,
-                externalScripts: page.externalScripts,
-                // Performance
-                responseTime: page.responseTime,
-                htmlSize: page.htmlSize,
-              })),
-            });
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to save page metadata:", err);
+      const pages = await crawlWebsite(url);
+
+      if (pages.length > 0) {
+        await prisma.pageMetadata.createMany({
+          data: pages.map((page) => ({
+            userId,
+            scanHistoryId: scanHistory.id,
+            siteUrl: normalizedUrl,
+            pageUrl: page.pageUrl,
+            title: page.title,
+            metaDesc: page.metaDescription,
+            metaKeywords: page.metaKeywords,
+            canonicalTag: page.canonicalUrl,
+            robotsMeta: page.robotsMeta,
+            // Headings
+            h1Count: page.h1Count,
+            h2Count: page.h2Count,
+            h3Count: page.h3Count,
+            h4Count: page.h4Count,
+            h5Count: page.h5Count,
+            h6Count: page.h6Count,
+            headingCount: page.headingCount,
+            // Content
+            wordCount: page.wordCount,
+            paragraphCount: page.paragraphCount,
+            sectionCount: page.sections,
+            divCount: page.divCount,
+            textLength: page.textLength,
+            contentSizeKb: page.contentSizeKb,
+            // Media
+            imageCount: page.imageCount,
+            imagesWithoutAlt: page.imagesWithoutAlt,
+            videoCount: page.videoCount,
+            iframeCount: page.iframeCount,
+            // Interactive Elements
+            buttonCount: page.buttons,
+            formCount: page.forms,
+            inputCount: page.inputs,
+            selectCount: page.selects,
+            textareaCount: page.textareas,
+            navElements: page.navElements,
+            tableCount: page.tables,
+            listCount: page.lists,
+            // Links
+            internalLinks: page.internalLinks,
+            externalLinks: page.externalLinks,
+            brokenLinks: page.brokenLinks,
+            // Scripts
+            scriptCount: page.scriptCount,
+            inlineScripts: page.inlineScripts,
+            externalScripts: page.externalScripts,
+            // Performance
+            responseTime: page.responseTime,
+            htmlSize: page.htmlSize,
+          })),
         });
+
+        const savedPages = await prisma.pageMetadata.findMany({
+          where: { scanHistoryId: scanHistory.id },
+          orderBy: { pageUrl: "asc" },
+        });
+
+        pageUiData = savedPages.map((page) => ({
+          id: page.id,
+          pageUrl: page.pageUrl,
+          title: page.title,
+          metaDesc: page.metaDesc,
+          metaKeywords: page.metaKeywords,
+          canonicalTag: page.canonicalTag,
+          robotsMeta: page.robotsMeta,
+          h1Count: page.h1Count,
+          h2Count: page.h2Count,
+          h3Count: page.h3Count,
+          h4Count: page.h4Count,
+          h5Count: page.h5Count,
+          h6Count: page.h6Count,
+          headingCount: page.headingCount,
+          wordCount: page.wordCount,
+          paragraphCount: page.paragraphCount,
+          sectionCount: page.sectionCount,
+          divCount: page.divCount,
+          textLength: page.textLength,
+          contentSizeKb: page.contentSizeKb,
+          imageCount: page.imageCount,
+          imagesWithoutAlt: page.imagesWithoutAlt,
+          videoCount: page.videoCount,
+          iframeCount: page.iframeCount,
+          buttonCount: page.buttonCount,
+          formCount: page.formCount,
+          inputCount: page.inputCount,
+          selectCount: page.selectCount,
+          textareaCount: page.textareaCount,
+          navElements: page.navElements,
+          tableCount: page.tableCount,
+          listCount: page.listCount,
+          internalLinks: page.internalLinks,
+          externalLinks: page.externalLinks,
+          brokenLinks: page.brokenLinks,
+          scriptCount: page.scriptCount,
+          inlineScripts: page.inlineScripts,
+          externalScripts: page.externalScripts,
+          responseTime: page.responseTime,
+          htmlSize: page.htmlSize,
+        }));
+      }
     } catch (scanError) {
       // Don't fail the entire request if scan history fails
       console.error("Failed to create scan history:", scanError);
@@ -389,6 +433,7 @@ export async function POST(
           createdAt: scrapedData.createdAt.toISOString(),
         },
         seoAnalysis,
+        pageUiData,
       },
     });
   } catch (error: unknown) {

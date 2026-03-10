@@ -93,6 +93,7 @@ export interface ScrapeResponse {
     requestLog: RequestLogEntry;
     scrapedData: ScrapedDataEntry;
     seoAnalysis?: SeoAnalysis;
+    pageUiData?: ScanPage[];
   };
   error?: string;
   message?: string;
@@ -200,6 +201,8 @@ export interface PageAnalysis {
   buttons: number;
   forms: number;
   inputs: number;
+  selects: number;
+  textareas: number;
   tables: number;
   lists: number;
   sections: number;

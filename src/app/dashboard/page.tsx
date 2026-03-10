@@ -15,6 +15,7 @@ import SeoScoreBadge from "@/components/SeoScoreBadge";
 import SeoChecklist from "@/components/SeoChecklist";
 import SeoMetricsGrid from "@/components/SeoMetricsGrid";
 import ScanTimeline from "@/components/ScanTimeline";
+import PageUIDetails from "@/components/PageUIDetails";
 import { ScrapeResponse, RequestLogEntry, StatsData, GroupedScans } from "@/types";
 
 function getAnimalEmoji(animal?: string | null): string {
@@ -53,6 +54,19 @@ export default function DashboardPage() {
   // Scans state
   const [scans, setScans] = useState<GroupedScans[]>([]);
   const [scansLoading, setScansLoading] = useState(true);
+  const latestPageUiData = lastResult?.data?.pageUiData ?? [];
+  const latestPageUiSummary = latestPageUiData.length > 0
+    ? {
+        avgWords: Math.round(
+          latestPageUiData.reduce((sum, pageData) => sum + pageData.wordCount, 0) / latestPageUiData.length
+        ),
+        totalForms: latestPageUiData.reduce((sum, pageData) => sum + pageData.formCount, 0),
+        totalScripts: latestPageUiData.reduce((sum, pageData) => sum + pageData.scriptCount, 0),
+        avgLoadTime: Math.round(
+          latestPageUiData.reduce((sum, pageData) => sum + pageData.responseTime, 0) / latestPageUiData.length
+        ),
+      }
+    : null;
 
   // Fetch logs
   const fetchLogs = useCallback(async (p: number) => {
@@ -240,6 +254,11 @@ export default function DashboardPage() {
                   {lastResult.data.scrapedData.bodyText.substring(0, 200)}…
                 </p>
               )}
+              {latestPageUiData.length > 0 && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1 font-mono">
+                  {latestPageUiData.length} page{latestPageUiData.length !== 1 ? "s" : ""} analyzed for UI structure
+                </p>
+              )}
             </div>
           )}
         </Card>
@@ -301,6 +320,87 @@ export default function DashboardPage() {
               <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-mono">
                 {lastResult.data.scrapedData.animalSpirit}
               </p>
+            </div>
+          </Card>
+        )}
+
+        {latestPageUiSummary && (
+          <Card className="p-4 sm:p-5 mb-6 animate-fade-in">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Latest Page UI Data
+              </h2>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md font-mono border border-zinc-200 dark:border-zinc-700 whitespace-nowrap">
+                {latestPageUiData.length} page{latestPageUiData.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                  Avg. Words
+                </p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {latestPageUiSummary.avgWords.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                  Total Forms
+                </p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {latestPageUiSummary.totalForms}
+                </p>
+              </div>
+
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                  Total Scripts
+                </p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {latestPageUiSummary.totalScripts}
+                </p>
+              </div>
+
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-md p-2.5 border border-zinc-200 dark:border-zinc-700 text-center">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-widest mb-1">
+                  Avg. Load Time
+                </p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {latestPageUiSummary.avgLoadTime}ms
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-12 gap-2 py-2 px-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 rounded-t-md">
+              <div className="col-span-4 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+                Page URL
+              </div>
+              <div className="col-span-3 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+                Words
+              </div>
+              <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+                H1
+              </div>
+              <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+                Images
+              </div>
+              <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+                Buttons
+              </div>
+              <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
+                Scripts
+              </div>
+              <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-right">
+                Time
+              </div>
+            </div>
+
+            <div className="border border-t-0 border-zinc-200 dark:border-zinc-700 rounded-b-md overflow-hidden">
+              {latestPageUiData.map((pageData) => (
+                <PageUIDetails key={pageData.id} page={pageData} />
+              ))}
             </div>
           </Card>
         )}

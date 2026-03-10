@@ -36,8 +36,8 @@ export default function PageUIDetails({ page }: PageUIDetailsProps) {
             {page.pageUrl}
           </a>
         </div>
-        <div className="col-span-3 text-xs text-zinc-600 dark:text-zinc-400 truncate">
-          {page.title || "No title"}
+        <div className="col-span-3 text-xs text-zinc-600 dark:text-zinc-400">
+          {page.wordCount.toLocaleString()}
         </div>
         <div className="col-span-1 text-xs text-zinc-600 dark:text-zinc-400 text-center">
           {page.h1Count}
@@ -176,6 +176,14 @@ export default function PageUIDetails({ page }: PageUIDetailsProps) {
                   <span className="font-semibold text-zinc-900 dark:text-zinc-100">{page.inputCount}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-400">Selects:</span>
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">{page.selectCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-400">Textareas:</span>
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">{page.textareaCount}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-zinc-600 dark:text-zinc-400">Nav Elements:</span>
                   <span className="font-semibold text-zinc-900 dark:text-zinc-100">{page.navElements}</span>
                 </div>
@@ -251,40 +259,6 @@ export default function PageUIDetails({ page }: PageUIDetailsProps) {
             </div>
           </div>
 
-          {/* Meta Tags */}
-          {(page.metaDesc || page.canonicalTag || page.metaKeywords) && (
-            <div className="ml-5 mt-4 bg-white dark:bg-zinc-800 rounded-md p-3 border border-zinc-200 dark:border-zinc-700">
-              <h5 className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest mb-2">
-                Meta Tags
-              </h5>
-              <div className="space-y-2 text-xs">
-                {page.metaDesc && (
-                  <div>
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Description:</span>
-                    <p className="text-zinc-700 dark:text-zinc-300 mt-0.5 font-mono text-[11px]">
-                      {page.metaDesc}
-                    </p>
-                  </div>
-                )}
-                {page.canonicalTag && (
-                  <div>
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Canonical:</span>
-                    <p className="text-zinc-700 dark:text-zinc-300 mt-0.5 font-mono text-[11px] truncate">
-                      {page.canonicalTag}
-                    </p>
-                  </div>
-                )}
-                {page.metaKeywords && (
-                  <div>
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Keywords:</span>
-                    <p className="text-zinc-700 dark:text-zinc-300 mt-0.5 font-mono text-[11px]">
-                      {page.metaKeywords}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>

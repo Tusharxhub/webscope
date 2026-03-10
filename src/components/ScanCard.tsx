@@ -155,7 +155,7 @@ export default function ScanCard({ scan }: ScanCardProps) {
               Page URL
             </div>
             <div className="col-span-3 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
-              Title
+              Words
             </div>
             <div className="col-span-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest text-center">
               H1

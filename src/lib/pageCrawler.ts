@@ -100,6 +100,8 @@ async function analyzePage(pageUrl: string, siteHost: string): Promise<PageAnaly
     const buttons = $("button").length;
     const forms = $("form").length;
     const inputs = $("input").length;
+    const selects = $("select").length;
+    const textareas = $("textarea").length;
     const tables = $("table").length;
     const lists = $("ul, ol").length;
     const sections = $("section").length;
@@ -203,6 +205,8 @@ async function analyzePage(pageUrl: string, siteHost: string): Promise<PageAnaly
         buttons,
         forms,
         inputs,
+        selects,
+        textareas,
         tables,
         lists,
         sections,
