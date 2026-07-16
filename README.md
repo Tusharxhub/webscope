@@ -168,7 +168,7 @@ model ScrapedData {
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/Tusharxhub/webscope.git
+git clone https://github.com/Tushardevx01/webscope.git
 cd webscope
 ```
 
