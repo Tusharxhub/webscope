@@ -297,6 +297,6 @@ This project is open source and available under the [MIT License](LICENSE).
 
 <div align="center">
 
-**Built with ❤️ by [Tushar](https://github.com/Tusharxhub)**
+**Built with ❤️ by [Tushar](https://github.com/Tushardevx01)**
 
 </div>
